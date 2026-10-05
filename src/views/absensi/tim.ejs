@@ -1,0 +1,27 @@
+<%- include('../partials/atas', { judul: 'Rekap absensi' }) %>
+<div class="judul-halaman"><h1>Rekap absensi</h1></div>
+<form class="filter" method="get" action="/absensi/tim">
+  <input type="month" name="bulan" value="<%= bulan %>">
+  <button class="tombol tombol-sekunder" type="submit">Tampilkan</button>
+</form>
+<div class="kartu tabel-bungkus">
+  <table class="tabel">
+    <thead><tr><th>Nomor induk</th><th>Nama</th><th>Hadir</th><th>Terlambat</th><th>Menit terlambat</th><th>Pulang awal</th><th>Tanpa catatan</th></tr></thead>
+    <tbody>
+      <% if (!baris.length) { %><tr><td colspan="7" class="kosong">Tidak ada karyawan pada bulan ini.</td></tr><% } %>
+      <% baris.forEach(function (b) { %>
+        <tr>
+          <td><a href="/absensi/karyawan/<%= b.id %>?bulan=<%= bulan %>"><%= b.nomor_induk %></a></td>
+          <td><%= b.nama %></td>
+          <td><%= b.ringkasan.hadir %></td>
+          <td><%= b.ringkasan.terlambat %></td>
+          <td><%= b.ringkasan.menitTerlambat %></td>
+          <td><%= b.ringkasan.pulangAwal %></td>
+          <td><%= b.ringkasan.tanpaCatatan %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<p class="redup">“Tanpa catatan” = hari kerja tanpa absen masuk; cuti dan izin belum diperhitungkan.</p>
+<%- include('../partials/bawah') %>

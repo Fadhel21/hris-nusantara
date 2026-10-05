@@ -1,0 +1,31 @@
+<%- include('../partials/atas', { judul: 'Hari libur' }) %>
+<div class="judul-halaman"><h1>Hari libur</h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<form class="filter" method="get" action="/absensi/libur">
+  <input type="number" name="tahun" value="<%= tahun %>" min="2000" max="2100" step="1" style="max-width:120px">
+  <button class="tombol tombol-sekunder" type="submit">Tampilkan</button>
+</form>
+<div class="kartu tabel-bungkus">
+  <table class="tabel">
+    <thead><tr><th>Tanggal</th><th>Keterangan</th><th></th></tr></thead>
+    <tbody>
+      <% if (!libur.length) { %><tr><td colspan="3" class="kosong">Belum ada hari libur untuk tahun <%= tahun %>.</td></tr><% } %>
+      <% libur.forEach(function (l) { %>
+        <tr>
+          <td><%= fmt.hari(l.tanggal) %>, <%= fmt.tanggal(l.tanggal) %></td>
+          <td><%= l.keterangan %></td>
+          <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/absensi/libur/<%= l.id %>/hapus" hx-confirm="Hapus hari libur ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<details class="tambah" open><summary>Tambah hari libur</summary>
+  <form method="post" action="/absensi/libur">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Tanggal *<input type="date" name="tanggal" required></label>
+    <label>Keterangan *<input type="text" name="keterangan" maxlength="200" required></label>
+    <button class="tombol" type="submit">Simpan</button>
+  </form>
+</details>
+<%- include('../partials/bawah') %>

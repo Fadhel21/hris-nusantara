@@ -1,0 +1,53 @@
+<%- include('../partials/atas', { judul: 'Pengaturan absensi' }) %>
+<div class="judul-halaman"><h1>Pengaturan absensi</h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+
+<section class="kartu blok">
+  <h2>Jadwal kerja</h2>
+  <p class="redup">Satu jadwal untuk semua karyawan. Jadwal baru berlaku mulai tanggal yang dipilih (tidak boleh surut) sehingga perhitungan masa lalu tidak berubah.</p>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Berlaku sejak</th><th>Jam masuk</th><th>Jam pulang</th><th>Toleransi</th><th>Hari kerja</th><th></th></tr></thead>
+    <tbody>
+      <% jadwal.forEach(function (j) { %>
+        <tr>
+          <td><%= fmt.tanggal(j.tanggal_berlaku) %> <% if (j.berlaku) { %><span class="lencana lencana-ok">berlaku</span><% } %></td>
+          <td><%= j.jam_masuk %></td><td><%= j.jam_pulang %></td><td><%= j.toleransi_menit %> menit</td>
+          <td><%= j.hari_kerja.map(function (h) { return namaHari[h]; }).join(', ') %></td>
+          <td class="aksi">
+            <% if (j.tanggal_berlaku > j.hari_ini) { %>
+              <button type="button" class="tautan-bahaya" hx-post="/absensi/pengaturan/jadwal/<%= j.id %>/hapus" hx-confirm="Hapus jadwal ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+  <details class="tambah"><summary>Tambah jadwal baru</summary>
+    <form method="post" action="/absensi/pengaturan/jadwal">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+      <label>Jam masuk *<input type="time" name="jam_masuk" value="08:00" required></label>
+      <label>Jam pulang *<input type="time" name="jam_pulang" value="17:00" required></label>
+      <label>Toleransi keterlambatan (menit)<input type="number" name="toleransi_menit" value="0" min="0" max="240" step="1"></label>
+      <fieldset class="hari-kerja"><legend>Hari kerja *</legend>
+        <% [1,2,3,4,5,6,7].forEach(function (h) { %>
+          <label class="centang"><input type="checkbox" name="hari_kerja" value="<%= h %>" <%= h <= 5 ? 'checked' : '' %>> <%= namaHari[h] %></label>
+        <% }) %>
+      </fieldset>
+      <button class="tombol" type="submit">Simpan jadwal</button>
+    </form>
+  </details>
+</section>
+
+<section class="kartu blok">
+  <h2>Masa simpan foto absensi</h2>
+  <p>Foto absensi dihapus otomatis oleh worker setelah <strong><%= retensi %> bulan</strong>. Catatan absensinya (jam, lokasi) tetap tersimpan.</p>
+  <% if (bolehUbahRetensi) { %>
+  <form method="post" action="/absensi/pengaturan/retensi" class="form-lebar">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Masa simpan (bulan)<input type="number" name="bulan" value="<%= retensi %>" min="1" max="60" step="1" required></label>
+    <button class="tombol" type="submit">Simpan</button>
+  </form>
+  <% } else { %><p class="redup">Hanya administrator yang dapat mengubahnya.</p><% } %>
+</section>
+<%- include('../partials/bawah') %>

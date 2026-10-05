@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const { muat } = require('./config/env');
 const menu = require('./config/menu');
 const format = require('./modules/karyawan/services/format');
+const waktu = require('./modules/absensi/services/waktu');
 const { muatPengguna, wajibMasuk } = require('./middleware/auth');
 const { csrf } = require('./middleware/csrf');
 const { tidakDitemukan, tanganiError } = require('./middleware/error');
@@ -21,6 +22,8 @@ function buatApp() {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         'script-src': ["'self'", "'unsafe-eval'"],
+        // blob: dipakai pengecilan foto di browser (gambar sementara sebelum diunggah).
+        'img-src': ["'self'", 'data:', 'blob:'],
       },
     },
   }));
@@ -35,13 +38,18 @@ function buatApp() {
   app.use((req, res, next) => {
     res.locals.menu = req.pengguna ? menu.filter((m) => m.peran.includes(req.pengguna.peran)) : [];
     res.locals.halaman = req.path;
-    res.locals.fmt = { rupiah: format.rupiah, tanggal: format.tanggal };
+    res.locals.fmt = {
+      rupiah: format.rupiah,
+      tanggal: format.tanggal,
+      hari: (t) => ['', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'][waktu.hariKe(t)],
+    };
     next();
   });
 
   app.use(require('./modules/pengguna/routes'));
   app.use(require('./modules/organisasi/routes'));
   app.use(require('./modules/karyawan/routes'));
+  app.use(require('./modules/absensi/routes'));
   app.get('/', wajibMasuk, (req, res) => res.render('beranda/index'));
 
   app.use(tidakDitemukan);

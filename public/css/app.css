@@ -80,3 +80,15 @@ input[type=date] { display:block; width:100%; margin-top:.3rem; padding:.55rem .
 .tautan-aksi { color:var(--utama); cursor:pointer; font-size:.85rem; margin:0 0 0 .75rem; display:inline; font-weight:400; }
 .centang { display:flex; align-items:center; gap:.5rem; font-weight:400; }
 .centang input { width:auto; margin:0; }
+.ringkasan { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:.75rem; margin-bottom:1rem; }
+.ringkasan > div { background:var(--kartu); border:1px solid var(--garis); border-radius:10px; padding:.75rem 1rem; }
+.ringkasan strong { display:block; font-size:1.5rem; }
+.ringkasan span { color:var(--redup); font-size:.85rem; }
+.redup-baris td { color:var(--redup); background:#fafbfc; }
+.aksi-absen { margin-top:1rem; display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+.aksi-absen .tombol:disabled { background:#aab4c0; cursor:not-allowed; }
+.aksi-absen p { flex-basis:100%; margin:.25rem 0 0; }
+fieldset.hari-kerja { border:1px solid var(--garis); border-radius:6px; margin:0 0 .9rem; padding:.5rem .75rem; }
+fieldset.hari-kerja .centang { display:inline-flex; margin:0 .75rem 0 0; }
+input[type=month], input[type=time] { display:block; margin-top:.3rem; padding:.55rem .7rem; border:1px solid var(--garis); border-radius:6px; font:inherit; }
+.filter input[type=month] { margin:0; }

@@ -1,0 +1,28 @@
+<%- include('../partials/atas', { judul: 'Absen saya' }) %>
+<div class="judul-halaman"><h1>Absen saya</h1></div>
+<% if (!terhubung) { %>
+  <div class="kartu"><p>Akun Anda belum terhubung ke data karyawan, sehingga tidak dapat absen. Hubungi administrator.</p></div>
+<% } else { %>
+  <section class="kartu blok">
+    <h2><%= fmt.hari(status.tanggal) %>, <%= fmt.tanggal(status.tanggal) %></h2>
+    <p class="redup">Waktu dicatat dari jam server (<%= status.zona %>), bukan jam perangkat Anda.</p>
+    <dl class="rincian">
+      <dt>Masuk</dt><dd><%= status.masuk ? status.masuk.jam : 'Belum absen' %></dd>
+      <dt>Pulang</dt><dd><%= status.pulang ? status.pulang.jam : 'Belum absen' %></dd>
+    </dl>
+    <% if (!status.adaPenempatan) { %>
+      <p class="galat">Penempatan cabang Anda belum diatur, sehingga belum bisa absen. Hubungi HR.</p>
+    <% } else { %>
+    <div data-absen data-url-masuk="/absensi/masuk" data-url-pulang="/absensi/pulang" class="aksi-absen">
+      <button class="tombol" type="button" data-aksi="masuk" <%= status.masuk ? 'disabled' : '' %>>Absen masuk</button>
+      <button class="tombol" type="button" data-aksi="pulang" <%= (!status.masuk || status.pulang) ? 'disabled' : '' %>>Absen pulang</button>
+      <input type="file" accept="image/*" capture="user" hidden data-foto>
+      <p class="redup" data-pesan>Foto selfie wajib; lokasi dicatat bila Anda mengizinkan.</p>
+    </div>
+    <% } %>
+  </section>
+  <%- include('riwayat_tabel') %>
+<% } %>
+<script src="/js/gambar.js" defer></script>
+<script src="/js/absen.js" defer></script>
+<%- include('../partials/bawah') %>

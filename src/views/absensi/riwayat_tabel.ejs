@@ -1,0 +1,38 @@
+<%
+  var label = {
+    hadir: 'Hadir', libur: 'Libur', bukan_hari_kerja: 'Bukan hari kerja', tanpa_catatan: 'Tanpa catatan',
+    belum: '—', di_luar_masa_kerja: 'Di luar masa kerja'
+  };
+%>
+<form class="filter" method="get" action="<%= tautanDasar %>">
+  <input type="month" name="bulan" value="<%= bulan %>">
+  <button class="tombol tombol-sekunder" type="submit">Tampilkan</button>
+</form>
+<div class="ringkasan">
+  <div><strong><%= ringkasan.hadir %></strong><span>hadir</span></div>
+  <div><strong><%= ringkasan.terlambat %></strong><span>terlambat (<%= ringkasan.menitTerlambat %> menit)</span></div>
+  <div><strong><%= ringkasan.pulangAwal %></strong><span>pulang awal</span></div>
+  <div><strong><%= ringkasan.tanpaCatatan %></strong><span>hari kerja tanpa catatan</span></div>
+</div>
+<div class="kartu tabel-bungkus">
+  <table class="tabel">
+    <thead><tr><th>Tanggal</th><th>Status</th><th>Masuk</th><th>Pulang</th><th>Terlambat</th><th>Pulang awal</th><th>Foto</th></tr></thead>
+    <tbody>
+      <% harian.forEach(function (h) { %>
+        <tr class="<%= h.status === 'bukan_hari_kerja' || h.status === 'libur' || h.status === 'di_luar_masa_kerja' ? 'redup-baris' : '' %>">
+          <td><%= fmt.hari(h.tanggal) %>, <%= fmt.tanggal(h.tanggal) %></td>
+          <td><%= label[h.status] %></td>
+          <td><%= h.masuk ? h.masuk.jam : '' %></td>
+          <td><%= h.pulang ? h.pulang.jam : '' %></td>
+          <td><%= h.terlambatMenit ? h.terlambatMenit + ' mnt' : '' %></td>
+          <td><%= h.pulangAwalMenit ? h.pulangAwalMenit + ' mnt' : '' %></td>
+          <td>
+            <% if (h.fotoMasuk) { %><a href="/absensi/foto/<%= h.masukId %>" target="_blank" rel="noopener">Masuk</a><% } %>
+            <% if (h.fotoPulang) { %><a href="/absensi/foto/<%= h.pulangId %>" target="_blank" rel="noopener">Pulang</a><% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<p class="redup">“Tanpa catatan” = hari kerja tanpa absen masuk. Cuti dan izin akan mengurangi hitungan ini setelah modul cuti tersedia. Foto dihapus otomatis setelah masa simpan.</p>

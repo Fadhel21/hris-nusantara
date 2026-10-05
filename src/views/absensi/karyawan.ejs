@@ -1,0 +1,10 @@
+<%- include('../partials/atas', { judul: 'Absensi ' + karyawan.nama }) %>
+<div class="judul-halaman">
+  <div>
+    <h1>Absensi: <%= karyawan.nama %></h1>
+    <span class="redup"><%= karyawan.nomor_induk %></span>
+  </div>
+  <a class="tombol tombol-sekunder" href="/absensi/tim?bulan=<%= bulan %>">Kembali ke rekap</a>
+</div>
+<%- include('riwayat_tabel') %>
+<%- include('../partials/bawah') %>

@@ -1,10 +1,18 @@
+<%
+  // Hanya satu item yang ditandai aktif: yang href-nya paling panjang dan cocok dengan alamat saat ini.
+  var aktifHref = '';
+  menu.forEach(function (m) {
+    var cocok = halaman === m.href || (m.href !== '/' && halaman.indexOf(m.href + '/') === 0);
+    if (cocok && m.href.length > aktifHref.length) aktifHref = m.href;
+  });
+%>
 <aside class="sidebar" :class="{ 'terbuka': menuBuka }" @click.outside="menuBuka = false">
   <div class="merek">HRIS</div>
   <nav>
     <% var grupSebelum = null; menu.forEach(function (m) { %>
       <% if (m.grup && m.grup !== grupSebelum) { %><div class="grup-menu"><%= m.grup %></div><% } %>
       <% grupSebelum = m.grup || null; %>
-      <a href="<%= m.href %>" class="<%= halaman === m.href || (m.href !== '/' && halaman.indexOf(m.href + '/') === 0) ? 'aktif' : '' %>"><%= m.label %></a>
+      <a href="<%= m.href %>" class="<%= m.href === aktifHref ? 'aktif' : '' %>"><%= m.label %></a>
     <% }) %>
   </nav>
 </aside>
