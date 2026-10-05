@@ -15,7 +15,7 @@ function labelOpsi(field, nilai, baris) {
   if (nilai === null || nilai === undefined) return '';
   if (field.ref) return baris[`${field.nama}__label`] || '';
   if (field.opsi) {
-    const o = field.opsi.find((x) => x.id === nilai);
+    const o = field.opsi.find((x) => x.id === String(nilai));
     return o ? o.label : nilai;
   }
   return String(nilai);

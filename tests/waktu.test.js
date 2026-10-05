@@ -83,7 +83,7 @@ test('waktu: susunHarian - status per hari dalam seminggu', () => {
   assert.strictEqual(harian[0].terlambatMenit, 0);
   assert.strictEqual(harian[1].terlambatMenit, 70);
   assert.strictEqual(harian[1].pulangAwalMenit, 30);
-  assert.deepStrictEqual(w.ringkas(harian), { hadir: 2, terlambat: 1, menitTerlambat: 70, pulangAwal: 1, tanpaCatatan: 1 });
+  assert.deepStrictEqual(w.ringkas(harian), { hadir: 2, terlambat: 1, menitTerlambat: 70, pulangAwal: 1, tanpaCatatan: 1, cuti: 0, izin: 0 });
 });
 
 test('waktu: hadir di hari libur/akhir pekan tidak dihitung terlambat', () => {

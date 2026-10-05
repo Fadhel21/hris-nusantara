@@ -7,6 +7,7 @@ const akses = require('./akses');
 const validasi = require('./validasi');
 const riwayat = require('./riwayat');
 const profil = require('./profil');
+const persetujuan = require('../../persetujuan/services/pengajuan');
 const dokumen = require('./dokumen');
 const { samarkan, formatNomorInduk } = require('./format');
 
@@ -187,9 +188,11 @@ async function keluarkan(pengguna, id, input) {
       [nilai.tanggal_keluar, nilai.alasan_keluar, id]);
     const cabut = await c.query(
       'UPDATE pengguna SET aktif = FALSE, updated_at = now() WHERE karyawan_id = $1 AND deleted_at IS NULL RETURNING id', [id]);
+    // Pengajuan yang masih menunggu otomatis dibatalkan (hari cuti/izin dilepas).
+    const dibatalkan = await persetujuan.batalkanMenungguKaryawan(c, id, pengguna);
     await audit.catat({
       penggunaId: pengguna.id, aksi: 'keluar', entitas: 'karyawan', entitasId: id,
-      sebelum: { status: 'aktif' }, sesudah: { status: 'keluar', ...nilai, login_dicabut: cabut.rowCount > 0 },
+      sebelum: { status: 'aktif' }, sesudah: { status: 'keluar', ...nilai, login_dicabut: cabut.rowCount > 0, pengajuan_dibatalkan: dibatalkan },
     }, c);
   });
 }

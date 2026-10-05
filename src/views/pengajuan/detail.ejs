@@ -1,0 +1,79 @@
+<%
+  var p = pengajuan;
+  var labelStatus = { menunggu: 'Menunggu', disetujui: 'Disetujui', ditolak: 'Ditolak', dibatalkan: 'Dibatalkan' };
+  var kelasStatus = { menunggu: 'lencana-tunggu', disetujui: 'lencana-ok', ditolak: 'lencana-tolak', dibatalkan: 'lencana-off' };
+  var labelLangkah = { menunggu: 'Menunggu', disetujui: 'Disetujui', ditolak: 'Ditolak' };
+  var d = detail;
+  var wkt = function (t) { return t ? new Date(t).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) + ' WIB' : ''; };
+%>
+<%- include('../partials/atas', { judul: label + ' ' + karyawan.nama }) %>
+<div class="judul-halaman">
+  <div>
+    <h1><%= label %>: <%= karyawan.nama %></h1>
+    <span class="redup"><%= karyawan.nomor_induk %></span>
+    <span class="lencana <%= kelasStatus[p.status] %>"><%= labelStatus[p.status] %></span>
+  </div>
+  <a class="tombol tombol-sekunder" href="/pengajuan">Kembali</a>
+</div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+
+<section class="kartu blok">
+  <h2>Rincian</h2>
+  <dl class="rincian">
+    <% if (p.jenis === 'cuti') { %>
+      <dt>Jenis cuti</dt><dd><%= d.jenis_cuti %><%= d.potong_saldo ? '' : ' (tidak memotong saldo)' %></dd>
+      <dt>Tanggal</dt><dd><%= fmt.tanggal(d.tanggal_mulai) %> s.d. <%= fmt.tanggal(d.tanggal_akhir) %></dd>
+      <dt>Hari dihitung</dt><dd><%= d.jumlah_hari %> hari kerja</dd>
+    <% } else if (p.jenis === 'izin') { %>
+      <dt>Kategori</dt><dd><%= d.kategori_label %></dd>
+      <dt>Tanggal</dt><dd><%= fmt.tanggal(d.tanggal_mulai) %> s.d. <%= fmt.tanggal(d.tanggal_akhir) %></dd>
+      <dt>Hari dihitung</dt><dd><%= d.jumlah_hari %> hari kerja</dd>
+    <% } else if (p.jenis === 'koreksi_absensi') { %>
+      <dt>Tanggal</dt><dd><%= fmt.tanggal(d.tanggal) %></dd>
+      <dt>Jam masuk</dt><dd><%= d.tercatat.masuk || 'tidak tercatat' %> → <strong><%= d.jam_masuk || 'tidak diubah' %></strong></dd>
+      <dt>Jam pulang</dt><dd><%= d.tercatat.pulang || 'tidak tercatat' %> → <strong><%= d.jam_pulang || 'tidak diubah' %></strong></dd>
+      <dt>Zona waktu</dt><dd><%= d.zona_waktu %></dd>
+    <% } %>
+    <dt>Alasan</dt><dd><%= p.alasan || '—' %></dd>
+    <dt>Diajukan</dt><dd><%= wkt(p.created_at) %></dd>
+  </dl>
+</section>
+
+<section class="kartu blok">
+  <h2>Persetujuan</h2>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Langkah</th><th>Pemberi keputusan</th><th>Status</th><th>Oleh</th><th>Waktu</th><th>Catatan</th></tr></thead>
+    <tbody>
+      <% p.langkah.forEach(function (l) { %>
+        <tr>
+          <td><%= l.urutan %></td>
+          <td><%= l.peran === 'hr' ? 'HR' : 'Atasan langsung' + (l.pemutus_nama ? ' (' + l.pemutus_nama + ')' : '') %></td>
+          <td><%= labelLangkah[l.status] %></td>
+          <td><%= l.diputuskan_username || '' %></td>
+          <td><%= wkt(l.diputuskan_pada) %></td>
+          <td><%= l.catatan || '' %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+
+  <% if (bolehPutuskan) { %>
+    <form method="post" action="/persetujuan/<%= p.id %>/putuskan" class="form-lebar" style="margin-top:1rem">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Catatan (wajib bila menolak)<textarea name="catatan" rows="2"></textarea></label>
+      <div class="baris-tombol">
+        <button class="tombol" type="submit" name="keputusan" value="setuju">Setujui</button>
+        <button class="tombol tombol-bahaya" type="submit" name="keputusan" value="tolak">Tolak</button>
+      </div>
+    </form>
+  <% } %>
+
+  <% if (bolehBatalPemohon || bolehBatalHr) { %>
+    <form method="post" action="/pengajuan/<%= p.id %>/batal" class="form-lebar" style="margin-top:1rem" x-data>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (bolehBatalHr) { %><label>Catatan pembatalan<input type="text" name="catatan" maxlength="500"></label><% } %>
+      <button class="tombol tombol-sekunder" type="submit" @click="if (!confirm('Batalkan pengajuan ini?')) $event.preventDefault()">Batalkan pengajuan</button>
+    </form>
+  <% } %>
+</section>
+<%- include('../partials/bawah') %>

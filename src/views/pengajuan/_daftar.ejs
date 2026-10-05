@@ -1,0 +1,29 @@
+<%
+  var labelStatus = { menunggu: 'Menunggu', disetujui: 'Disetujui', ditolak: 'Ditolak', dibatalkan: 'Dibatalkan' };
+  var kelasStatus = { menunggu: 'lencana-tunggu', disetujui: 'lencana-ok', ditolak: 'lencana-tolak', dibatalkan: 'lencana-off' };
+  var labelJenis = { cuti: 'Cuti', izin: 'Izin', koreksi_absensi: 'Koreksi absensi' };
+  var labelKategori = { sakit: 'Sakit', keperluan_pribadi: 'Keperluan pribadi', lainnya: 'Lainnya' };
+  var rincian = function (r) {
+    if (r.jenis === 'cuti') return (r.jenis_cuti || '') + ': ' + fmt.tanggal(r.tanggal_mulai) + (r.tanggal_akhir !== r.tanggal_mulai ? ' s.d. ' + fmt.tanggal(r.tanggal_akhir) : '') + ' (' + r.jumlah_hari + ' hari)';
+    if (r.jenis === 'izin') return (labelKategori[r.kategori_izin] || '') + ': ' + fmt.tanggal(r.tanggal_mulai) + (r.tanggal_akhir !== r.tanggal_mulai ? ' s.d. ' + fmt.tanggal(r.tanggal_akhir) : '') + ' (' + r.jumlah_hari + ' hari)';
+    return 'Tanggal ' + fmt.tanggal(r.tanggal_mulai);
+  };
+%>
+<div class="kartu tabel-bungkus">
+  <table class="tabel">
+    <thead><tr><% if (tampilNama) { %><th>Pemohon</th><% } %><th>Jenis</th><th>Rincian</th><th>Diajukan</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% if (!daftar.length) { %><tr><td colspan="<%= tampilNama ? 6 : 5 %>" class="kosong"><%= pesanKosong %></td></tr><% } %>
+      <% daftar.forEach(function (r) { %>
+        <tr>
+          <% if (tampilNama) { %><td><%= r.nama_karyawan %> <span class="redup"><%= r.nomor_induk %></span></td><% } %>
+          <td><%= labelJenis[r.jenis] %></td>
+          <td><%= rincian(r) %></td>
+          <td><%= fmt.tanggal(new Date(r.created_at).toISOString().slice(0, 10)) %></td>
+          <td><span class="lencana <%= kelasStatus[r.status] %>"><%= labelStatus[r.status] %></span></td>
+          <td class="aksi"><a href="/pengajuan/<%= r.id %>">Lihat</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

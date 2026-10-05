@@ -1,0 +1,44 @@
+<%- include('../partials/atas', { judul: 'Jatah & saldo cuti' }) %>
+<div class="judul-halaman"><h1>Jatah &amp; saldo cuti <%= tahun %></h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<% if (hasil) { %><p class="info" role="status"><%= hasil.dibuat %> karyawan diberi jatah, <%= hasil.dilewati %> dilewati (sudah punya jatah).</p><% } %>
+
+<form class="filter" method="get" action="/cuti/jatah">
+  <input type="number" name="tahun" value="<%= tahun %>" min="2000" max="2100" step="1" style="max-width:120px">
+  <button class="tombol tombol-sekunder" type="submit">Tampilkan</button>
+</form>
+
+<details class="tambah" open><summary>Beri jatah cuti</summary>
+  <form method="post" action="/cuti/jatah">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="tahun" value="<%= tahun %>">
+    <label>Jenis cuti *
+      <select name="jenis_cuti_id" required>
+        <option value="">— pilih —</option>
+        <% jenisCuti.filter(function (j) { return j.potong_saldo; }).forEach(function (j) { %><option value="<%= j.id %>"><%= j.nama %> (<%= j.jatah_hari %> hari)</option><% }) %>
+      </select>
+    </label>
+    <label>Karyawan (kosongkan untuk semua karyawan aktif)
+      <select name="karyawan_id">
+        <option value="">— semua karyawan aktif —</option>
+        <% var terlihat = {}; baris.forEach(function (b) { if (!terlihat[b.karyawan_id]) { terlihat[b.karyawan_id] = true; %><option value="<%= b.karyawan_id %>"><%= b.nomor_induk %> - <%= b.nama %></option><% } }) %>
+      </select>
+    </label>
+    <p class="redup">Jumlah hari mengikuti pengaturan jenis cuti. Karyawan yang sudah diberi jatah untuk tahun ini dilewati, sehingga aman diulang. Aturan masa kerja diatur HR.</p>
+    <button class="tombol" type="submit">Beri jatah tahun <%= tahun %></button>
+  </form>
+</details>
+
+<div class="kartu tabel-bungkus" style="margin-top:1rem">
+  <table class="tabel">
+    <thead><tr><th>Nomor induk</th><th>Nama</th><th>Jenis cuti</th><th>Jatah</th><th>Terpakai</th><th>Hangus</th><th>Saldo</th></tr></thead>
+    <tbody>
+      <% if (!baris.length) { %><tr><td colspan="7" class="kosong">Belum ada data. Buat jenis cuti yang memakai saldo, lalu beri jatah.</td></tr><% } %>
+      <% baris.forEach(function (b) { %>
+        <tr><td><%= b.nomor_induk %></td><td><%= b.nama %></td><td><%= b.jenis_cuti %></td><td><%= b.jatah %></td><td><%= b.pakai %></td><td><%= b.hangus %></td><td><strong><%= b.saldo %></strong></td></tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<p class="redup">Sisa cuti tahun yang sudah lewat dihanguskan otomatis oleh worker (mutasi “hangus”). Saldo hanya berubah lewat mutasi: jatah, pakai, batal, hangus.</p>
+<%- include('../partials/bawah') %>

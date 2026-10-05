@@ -67,11 +67,23 @@ function menitPulangAwal(menitPulang, jadwal) {
 //   libur: Set tanggal libur; hariIni: tanggal 'hari ini' menurut zona karyawan.
 //   mulaiKerja/selesaiKerja: tanggal masuk dan keluar karyawan (selesaiKerja boleh null).
 // Status: hadir | libur | bukan_hari_kerja | tanpa_catatan | belum | di_luar_masa_kerja
-function susunHarian({ awal, akhir, hariIni, jadwal, libur, catatan, mulaiKerja, selesaiKerja }) {
+//   ketidakhadiran: Map tanggal -> 'cuti' | 'izin' (hanya pengajuan yang sudah disetujui).
+//   koreksi: [{ tanggal, waktu_masuk, waktu_pulang, zona_waktu }] koreksi absensi yang sudah disetujui;
+//            nilainya menggantikan catatan mentah pada tanggal itu (catatan mentah sendiri tidak diubah).
+function susunHarian({
+  awal, akhir, hariIni, jadwal, libur, catatan, mulaiKerja, selesaiKerja, ketidakhadiran = new Map(), koreksi = [],
+}) {
   const perHari = new Map();
   for (const c of catatan) {
     if (!perHari.has(c.tanggal)) perHari.set(c.tanggal, {});
     perHari.get(c.tanggal)[c.jenis] = c;
+  }
+  for (const k of koreksi) {
+    if (!perHari.has(k.tanggal)) perHari.set(k.tanggal, {});
+    const hari = perHari.get(k.tanggal);
+    for (const [jenis, w] of [['masuk', k.waktu_masuk], ['pulang', k.waktu_pulang]]) {
+      if (w) hari[jenis] = { id: null, tanggal: k.tanggal, jenis, waktu: w, zona_waktu: k.zona_waktu, ada_foto: false, koreksi: true };
+    }
   }
   return daftarTanggal(awal, akhir).map((tanggal) => {
     const j = jadwalBerlaku(jadwal, tanggal);
@@ -83,6 +95,7 @@ function susunHarian({ awal, akhir, hariIni, jadwal, libur, catatan, mulaiKerja,
       masukId: masuk ? masuk.id : null, pulangId: pulang ? pulang.id : null,
       fotoMasuk: !!(masuk && masuk.ada_foto), fotoPulang: !!(pulang && pulang.ada_foto),
       terlambatMenit: 0, pulangAwalMenit: 0,
+      dikoreksi: !!((masuk && masuk.koreksi) || (pulang && pulang.koreksi)),
     };
     if (masuk) baris.masuk = lokal(masuk.waktu, masuk.zona_waktu);
     if (pulang) baris.pulang = lokal(pulang.waktu, pulang.zona_waktu);
@@ -91,6 +104,7 @@ function susunHarian({ awal, akhir, hariIni, jadwal, libur, catatan, mulaiKerja,
     else if (masuk) baris.status = 'hadir';
     else if (adalibur) baris.status = 'libur';
     else if (!hariKerja) baris.status = 'bukan_hari_kerja';
+    else if (ketidakhadiran.has(tanggal)) baris.status = ketidakhadiran.get(tanggal);
     else if (tanggal >= hariIni) baris.status = 'belum';
     else baris.status = 'tanpa_catatan';
 
@@ -104,9 +118,11 @@ function susunHarian({ awal, akhir, hariIni, jadwal, libur, catatan, mulaiKerja,
 }
 
 function ringkas(harian) {
-  const r = { hadir: 0, terlambat: 0, menitTerlambat: 0, pulangAwal: 0, tanpaCatatan: 0 };
+  const r = { hadir: 0, terlambat: 0, menitTerlambat: 0, pulangAwal: 0, tanpaCatatan: 0, cuti: 0, izin: 0 };
   for (const h of harian) {
     if (h.status === 'hadir') r.hadir += 1;
+    if (h.status === 'cuti') r.cuti += 1;
+    if (h.status === 'izin') r.izin += 1;
     if (h.status === 'tanpa_catatan') r.tanpaCatatan += 1;
     if (h.terlambatMenit > 0) { r.terlambat += 1; r.menitTerlambat += h.terlambatMenit; }
     if (h.pulangAwalMenit > 0) r.pulangAwal += 1;

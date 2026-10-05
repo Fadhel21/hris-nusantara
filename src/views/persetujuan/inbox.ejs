@@ -1,0 +1,18 @@
+<%- include('../partials/atas', { judul: 'Persetujuan' }) %>
+<div class="judul-halaman"><h1>Persetujuan</h1></div>
+<div class="tab-daftar">
+  <a class="tab-tautan <%= tab === 'menunggu' ? 'aktif' : '' %>" href="/persetujuan">Menunggu keputusan Anda</a>
+  <a class="tab-tautan <%= tab === 'tim' ? 'aktif' : '' %>" href="/persetujuan?tab=tim">Semua pengajuan tim</a>
+</div>
+<% if (tab === 'tim') { %>
+  <form class="filter" method="get" action="/persetujuan">
+    <input type="hidden" name="tab" value="tim">
+    <select name="status">
+      <option value="">Semua status</option>
+      <% ['menunggu', 'disetujui', 'ditolak', 'dibatalkan'].forEach(function (s) { %><option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s %></option><% }) %>
+    </select>
+    <button class="tombol tombol-sekunder" type="submit">Tampilkan</button>
+  </form>
+<% } %>
+<%- include('../pengajuan/_daftar', { tampilNama: true, pesanKosong: tab === 'menunggu' ? 'Tidak ada pengajuan yang menunggu keputusan Anda.' : 'Tidak ada pengajuan.' }) %>
+<%- include('../partials/bawah') %>

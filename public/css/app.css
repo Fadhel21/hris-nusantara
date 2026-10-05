@@ -92,3 +92,8 @@ fieldset.hari-kerja { border:1px solid var(--garis); border-radius:6px; margin:0
 fieldset.hari-kerja .centang { display:inline-flex; margin:0 .75rem 0 0; }
 input[type=month], input[type=time] { display:block; margin-top:.3rem; padding:.55rem .7rem; border:1px solid var(--garis); border-radius:6px; font:inherit; }
 .filter input[type=month] { margin:0; }
+.lencana-tunggu { background:#fff1cc; color:#8a5a00; }
+.lencana-tolak { background:#fde0dd; color:#9a1c10; }
+.tab-tautan { padding:.6rem 1rem; text-decoration:none; color:var(--redup); border-bottom:2px solid transparent; white-space:nowrap; }
+.tab-tautan.aktif { color:var(--utama); border-bottom-color:var(--utama); }
+.info { color:#146c2e; background:#dcf5e4; border-radius:6px; padding:.5rem .75rem; }

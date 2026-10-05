@@ -1,0 +1,73 @@
+<%- include('../partials/atas', { judul: 'Pengajuan saya' }) %>
+<div class="judul-halaman"><h1>Pengajuan saya</h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<% var v = function (n) { return isian[n] === undefined ? '' : String(isian[n]); }; %>
+
+<% if (!punyaKaryawan) { %>
+  <div class="kartu"><p>Akun Anda belum terhubung ke data karyawan, sehingga tidak dapat membuat pengajuan.</p></div>
+<% } else { %>
+  <section class="kartu blok">
+    <h2>Saldo cuti <%= tahun %></h2>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Jenis</th><th>Jatah</th><th>Terpakai</th><th>Dibatalkan</th><th>Hangus</th><th>Saldo</th><th>Menunggu persetujuan</th><th>Tersedia</th></tr></thead>
+      <tbody>
+        <% if (!saldo.length) { %><tr><td colspan="8" class="kosong">Belum ada jenis cuti yang memakai saldo.</td></tr><% } %>
+        <% saldo.forEach(function (s) { %>
+          <tr><td><%= s.nama %></td><td><%= s.jatah %></td><td><%= s.pakai %></td><td><%= s.batal %></td><td><%= s.hangus %></td><td><strong><%= s.saldo %></strong></td><td><%= s.menunggu %></td><td><strong><%= s.tersedia %></strong></td></tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="kartu blok" x-data="{ tab: '<%= tab %>' }">
+    <h2>Buat pengajuan</h2>
+    <div class="tab-daftar" role="tablist">
+      <button type="button" :class="{ 'aktif': tab === 'cuti' }" @click="tab = 'cuti'">Cuti</button>
+      <button type="button" :class="{ 'aktif': tab === 'izin' }" @click="tab = 'izin'">Izin</button>
+      <button type="button" :class="{ 'aktif': tab === 'koreksi' }" @click="tab = 'koreksi'">Koreksi absensi</button>
+    </div>
+
+    <form method="post" action="/pengajuan/cuti" class="form-lebar" x-show="tab === 'cuti'" x-transition.opacity>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Jenis cuti *
+        <select name="jenis_cuti_id" required>
+          <option value="">— pilih —</option>
+          <% jenisCuti.forEach(function (j) { %><option value="<%= j.id %>" <%= v('jenis_cuti_id') === String(j.id) ? 'selected' : '' %>><%= j.nama %><%= j.potong_saldo ? '' : ' (tidak memotong saldo)' %></option><% }) %>
+        </select>
+      </label>
+      <label>Tanggal mulai *<input type="date" name="tanggal_mulai" value="<%= tab === 'cuti' ? v('tanggal_mulai') : '' %>" required></label>
+      <label>Tanggal akhir (kosongkan bila satu hari)<input type="date" name="tanggal_akhir" value="<%= tab === 'cuti' ? v('tanggal_akhir') : '' %>"></label>
+      <label>Alasan *<textarea name="alasan" rows="2" required><%= tab === 'cuti' ? v('alasan') : '' %></textarea></label>
+      <p class="redup">Hanya hari kerja yang dihitung; akhir pekan dan hari libur tidak memotong cuti.</p>
+      <button class="tombol" type="submit">Ajukan cuti</button>
+    </form>
+
+    <form method="post" action="/pengajuan/izin" class="form-lebar" x-show="tab === 'izin'" x-cloak x-transition.opacity>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Kategori *
+        <select name="kategori" required>
+          <option value="">— pilih —</option>
+          <% Object.keys(kategoriIzin).forEach(function (kunci) { %><option value="<%= kunci %>" <%= tab === 'izin' && v('kategori') === kunci ? 'selected' : '' %>><%= kategoriIzin[kunci] %></option><% }) %>
+        </select>
+      </label>
+      <label>Tanggal mulai *<input type="date" name="tanggal_mulai" value="<%= tab === 'izin' ? v('tanggal_mulai') : '' %>" required></label>
+      <label>Tanggal akhir (kosongkan bila satu hari)<input type="date" name="tanggal_akhir" value="<%= tab === 'izin' ? v('tanggal_akhir') : '' %>"></label>
+      <label>Alasan *<textarea name="alasan" rows="2" required><%= tab === 'izin' ? v('alasan') : '' %></textarea></label>
+      <button class="tombol" type="submit">Ajukan izin</button>
+    </form>
+
+    <form method="post" action="/pengajuan/koreksi" class="form-lebar" x-show="tab === 'koreksi'" x-cloak x-transition.opacity>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <p class="redup">Catatan absen asli tidak diubah. Jam yang Anda ajukan berlaku setelah disetujui. Isi salah satu atau keduanya.</p>
+      <label>Tanggal *<input type="date" name="tanggal" value="<%= tab === 'koreksi' ? v('tanggal') : '' %>" required></label>
+      <label>Jam masuk yang benar<input type="time" name="jam_masuk" value="<%= tab === 'koreksi' ? v('jam_masuk') : '' %>"></label>
+      <label>Jam pulang yang benar<input type="time" name="jam_pulang" value="<%= tab === 'koreksi' ? v('jam_pulang') : '' %>"></label>
+      <label>Alasan *<textarea name="alasan" rows="2" required><%= tab === 'koreksi' ? v('alasan') : '' %></textarea></label>
+      <button class="tombol" type="submit">Ajukan koreksi</button>
+    </form>
+  </section>
+<% } %>
+
+<h2>Riwayat pengajuan</h2>
+<%- include('_daftar', { tampilNama: false, pesanKosong: 'Belum ada pengajuan.' }) %>
+<%- include('../partials/bawah') %>

@@ -118,6 +118,28 @@ async function ambilCatatan(karyawanIds, awal, akhir) {
   return rows;
 }
 
+// Koreksi absensi dan cuti/izin yang sudah DISETUJUI, untuk rentang tanggal dan sekumpulan karyawan.
+async function ambilPenyesuaian(karyawanIds, awal, akhir) {
+  const [koreksi, tidakHadir] = await Promise.all([
+    db.query(
+      `SELECT karyawan_id, tanggal, waktu_masuk, waktu_pulang, zona_waktu FROM absensi_koreksi
+        WHERE karyawan_id = ANY($1::bigint[]) AND tanggal BETWEEN $2 AND $3 AND deleted_at IS NULL`, [karyawanIds, awal, akhir]),
+    db.query(
+      `SELECT h.karyawan_id, h.tanggal, h.jenis FROM ketidakhadiran_hari h JOIN pengajuan p ON p.id = h.pengajuan_id
+        WHERE h.karyawan_id = ANY($1::bigint[]) AND h.tanggal BETWEEN $2 AND $3 AND h.deleted_at IS NULL AND p.status = 'disetujui'`,
+      [karyawanIds, awal, akhir]),
+  ]);
+  return { koreksi: koreksi.rows, tidakHadir: tidakHadir.rows };
+}
+
+function penyesuaianKaryawan(penyesuaian, karyawanId) {
+  const id = String(karyawanId);
+  return {
+    koreksi: penyesuaian.koreksi.filter((x) => String(x.karyawan_id) === id),
+    ketidakhadiran: new Map(penyesuaian.tidakHadir.filter((x) => String(x.karyawan_id) === id).map((x) => [x.tanggal, x.jenis])),
+  };
+}
+
 // Rekap harian satu karyawan untuk satu bulan.
 async function riwayat(pengguna, karyawanId, bulanParam) {
   await akses.pastikanBolehLihat(pengguna, karyawanId);
@@ -126,12 +148,13 @@ async function riwayat(pengguna, karyawanId, bulanParam) {
     'SELECT id, nomor_induk, nama, tanggal_masuk, tanggal_keluar FROM karyawan WHERE id = $1 AND deleted_at IS NULL', [karyawanId]);
   const k = rows[0];
   const zona = (await zonaSaatIni(db, karyawanId)) || ZONA_BAWAAN;
-  const [jadwal, libur, catatan] = await Promise.all([
+  const [jadwal, libur, catatan, penyesuaian] = await Promise.all([
     pengaturan.jadwalUntukHitung(), pengaturan.liburDalamRentang(awal, akhir), ambilCatatan([karyawanId], awal, akhir),
+    ambilPenyesuaian([karyawanId], awal, akhir),
   ]);
   const harian = waktu.susunHarian({
     awal, akhir, hariIni: waktu.lokal(new Date(), zona).tanggal, jadwal, libur, catatan,
-    mulaiKerja: k.tanggal_masuk, selesaiKerja: k.tanggal_keluar,
+    mulaiKerja: k.tanggal_masuk, selesaiKerja: k.tanggal_keluar, ...penyesuaianKaryawan(penyesuaian, karyawanId),
   });
   return { karyawan: k, bulan, harian, ringkasan: waktu.ringkas(harian) };
 }
@@ -148,9 +171,9 @@ async function rekapTim(pengguna, bulanParam) {
        LEFT JOIN cabang c ON c.id = p.cabang_id
       WHERE k.deleted_at IS NULL AND k.tanggal_masuk <= $1 AND (k.tanggal_keluar IS NULL OR k.tanggal_keluar >= $2) AND ${kondisi}
       ORDER BY k.nomor_induk`, params);
-  const [jadwal, libur, catatan] = await Promise.all([
+  const [jadwal, libur, catatan, penyesuaian] = await Promise.all([
     pengaturan.jadwalUntukHitung(), pengaturan.liburDalamRentang(awal, akhir),
-    ambilCatatan(daftar.map((d) => d.id), awal, akhir),
+    ambilCatatan(daftar.map((d) => d.id), awal, akhir), ambilPenyesuaian(daftar.map((d) => d.id), awal, akhir),
   ]);
   const perKaryawan = new Map();
   for (const c of catatan) {
@@ -161,6 +184,7 @@ async function rekapTim(pengguna, bulanParam) {
     const harian = waktu.susunHarian({
       awal, akhir, hariIni: waktu.lokal(new Date(), k.zona).tanggal, jadwal, libur,
       catatan: perKaryawan.get(String(k.id)) || [], mulaiKerja: k.tanggal_masuk, selesaiKerja: k.tanggal_keluar,
+      ...penyesuaianKaryawan(penyesuaian, k.id),
     });
     return { id: k.id, nomor_induk: k.nomor_induk, nama: k.nama, ringkasan: waktu.ringkas(harian) };
   });
@@ -176,4 +200,4 @@ async function untukDibukaFoto(pengguna, catatId) {
   return jalurAman(rows[0].foto_path);
 }
 
-module.exports = { statusHariIni, catat, riwayat, rekapTim, untukDibukaFoto, bulanBerjalan };
+module.exports = { statusHariIni, catat, riwayat, rekapTim, untukDibukaFoto, bulanBerjalan, zonaSaatIni };

@@ -50,6 +50,8 @@ function buatApp() {
   app.use(require('./modules/organisasi/routes'));
   app.use(require('./modules/karyawan/routes'));
   app.use(require('./modules/absensi/routes'));
+  app.use(require('./modules/persetujuan/routes'));
+  app.use(require('./modules/cuti/routes'));
   app.get('/', wajibMasuk, (req, res) => res.render('beranda/index'));
 
   app.use(tidakDitemukan);

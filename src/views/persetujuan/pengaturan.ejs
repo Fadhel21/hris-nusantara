@@ -1,0 +1,14 @@
+<%- include('../partials/atas', { judul: 'Alur persetujuan' }) %>
+<div class="judul-halaman"><h1>Alur persetujuan</h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<section class="kartu blok form-lebar">
+  <p>Berlaku untuk semua pengajuan baru (cuti, izin, koreksi absensi). Pengajuan yang sedang berjalan tetap memakai alur saat diajukan. Tidak seorang pun dapat memutuskan pengajuannya sendiri.</p>
+  <form method="post" action="/persetujuan/pengaturan">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <% Object.keys(daftarMode).forEach(function (k) { %>
+      <label class="centang"><input type="radio" name="mode" value="<%= k %>" <%= mode === k ? 'checked' : '' %>> <%= daftarMode[k] %></label>
+    <% }) %>
+    <button class="tombol" type="submit">Simpan</button>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

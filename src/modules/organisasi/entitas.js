@@ -61,6 +61,24 @@ const entitas = {
     unik: 'Kode jabatan sudah dipakai.',
     dipakai: [],
   },
+  jenis_cuti: {
+    tabel: 'jenis_cuti', judul: 'Jenis cuti', urut: 't.nama',
+    fields: [
+      { nama: 'kode', label: 'Kode', tipe: 'text', wajib: true },
+      { nama: 'nama', label: 'Nama', tipe: 'text', wajib: true },
+      { nama: 'jatah_hari', label: 'Jatah per tahun (hari)', tipe: 'number', wajib: true },
+      {
+        nama: 'potong_saldo', label: 'Memotong saldo', tipe: 'select', wajib: true,
+        opsi: [{ id: 'true', label: 'Ya (memakai saldo)' }, { id: 'false', label: 'Tidak (hanya dicatat)' }],
+      },
+    ],
+    kolom: ['kode', 'nama', 'jatah_hari', 'potong_saldo'],
+    unik: 'Kode jenis cuti sudah dipakai.',
+    dipakai: [
+      { tabel: 'pengajuan_cuti', kolom: 'jenis_cuti_id', pesan: 'sudah dipakai pada pengajuan cuti' },
+      { tabel: 'saldo_cuti_mutasi', kolom: 'jenis_cuti_id', pesan: 'sudah memiliki saldo' },
+    ],
+  },
   golongan: {
     tabel: 'golongan', judul: 'Golongan', urut: 't.urutan',
     fields: [
