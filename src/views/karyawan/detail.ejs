@@ -1,0 +1,168 @@
+<%
+  var k = karyawan;
+  var pilih = function (daftar) { return daftar.map(function (o) { return '<option value="' + o.id + '">' + o.label.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</option>'; }).join(''); };
+  var f = fmt;
+%>
+<%- include('../partials/atas', { judul: k.nama }) %>
+<div class="judul-halaman">
+  <div>
+    <h1><%= k.nama %></h1>
+    <span class="redup"><%= k.nomor_induk %></span>
+    <span class="lencana <%= k.status === 'aktif' ? 'lencana-ok' : 'lencana-off' %>"><%= k.status %></span>
+  </div>
+  <% if (bolehKelola) { %><a class="tombol tombol-sekunder" href="/karyawan/<%= k.id %>/ubah">Ubah data</a><% } %>
+</div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+
+<div x-data="{ tab: 'profil' }">
+  <div class="tab-daftar" role="tablist">
+    <button type="button" :class="{ 'aktif': tab === 'profil' }" @click="tab = 'profil'">Profil</button>
+    <button type="button" :class="{ 'aktif': tab === 'penempatan' }" @click="tab = 'penempatan'">Penempatan</button>
+    <% if (gaji) { %><button type="button" :class="{ 'aktif': tab === 'gaji' }" @click="tab = 'gaji'">Gaji</button><% } %>
+    <% if (kontrak) { %><button type="button" :class="{ 'aktif': tab === 'kontrak' }" @click="tab = 'kontrak'">Kontrak</button><% } %>
+    <% if (bolehAkun) { %><button type="button" :class="{ 'aktif': tab === 'akun' }" @click="tab = 'akun'">Akun login</button><% } %>
+    <% if (bolehKelola && k.status === 'aktif') { %><button type="button" :class="{ 'aktif': tab === 'keluar' }" @click="tab = 'keluar'">Keluar</button><% } %>
+  </div>
+
+  <section class="kartu" x-show="tab === 'profil'" x-transition.opacity>
+    <dl class="rincian">
+      <dt>NIK</dt><dd><%= k.nik || '—' %></dd>
+      <dt>NPWP</dt><dd><%= k.npwp || '—' %></dd>
+      <dt>Tanggal lahir</dt><dd><%= f.tanggal(k.tanggal_lahir) || '—' %></dd>
+      <dt>Jenis kelamin</dt><dd><%= k.jenis_kelamin === 'L' ? 'Laki-laki' : (k.jenis_kelamin === 'P' ? 'Perempuan' : '—') %></dd>
+      <dt>Alamat</dt><dd><%= k.alamat || '—' %></dd>
+      <dt>Telepon</dt><dd><%= k.telepon || '—' %></dd>
+      <dt>Email</dt><dd><%= k.email || '—' %></dd>
+      <dt>Bank / rekening</dt><dd><%= k.bank || '—' %> <%= k.nomor_rekening || '' %></dd>
+      <dt>Tanggal masuk</dt><dd><%= f.tanggal(k.tanggal_masuk) %></dd>
+      <% if (k.status === 'keluar') { %>
+        <dt>Tanggal keluar</dt><dd><%= f.tanggal(k.tanggal_keluar) %></dd>
+        <dt>Alasan keluar</dt><dd><%= k.alasan_keluar %></dd>
+      <% } %>
+    </dl>
+    <% if (!sensitif) { %><p class="redup">NIK, NPWP, dan rekening disamarkan untuk peran Anda.</p><% } %>
+  </section>
+
+  <section class="kartu" x-show="tab === 'penempatan'" x-cloak x-transition.opacity>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Berlaku sejak</th><th>Cabang</th><th>Departemen</th><th>Jabatan</th><th>Golongan</th><th>Atasan</th><% if (bolehKelola) { %><th></th><% } %></tr></thead>
+      <tbody>
+        <% penempatan.forEach(function (r) { %>
+          <tr>
+            <td><%= f.tanggal(r.tanggal_berlaku) %> <% if (r.berlaku) { %><span class="lencana lencana-ok">berlaku</span><% } %></td>
+            <td><%= r.cabang %></td><td><%= r.departemen %></td><td><%= r.jabatan %></td><td><%= r.golongan || '' %></td>
+            <td><%= r.atasan ? r.atasan_nomor + ' · ' + r.atasan : '' %></td>
+            <% if (bolehKelola) { %><td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/karyawan/<%= k.id %>/riwayat/penempatan/<%= r.id %>/hapus" hx-confirm="Hapus riwayat penempatan ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td><% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% if (bolehKelola && k.status === 'aktif') { %>
+    <details class="tambah"><summary>Tambah penempatan baru (mutasi / promosi)</summary>
+      <form method="post" action="/karyawan/<%= k.id %>/penempatan">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+        <label>Cabang *<select name="cabang_id" required><option value="">— pilih —</option><%- pilih(opsi.cabang) %></select></label>
+        <label>Departemen *<select name="departemen_id" required><option value="">— pilih —</option><%- pilih(opsi.departemen) %></select></label>
+        <label>Jabatan *<select name="jabatan_id" required><option value="">— pilih —</option><%- pilih(opsi.jabatan) %></select></label>
+        <label>Golongan<select name="golongan_id"><option value="">— tidak ada —</option><%- pilih(opsi.golongan) %></select></label>
+        <label>Atasan langsung<select name="atasan_id"><option value="">— tidak ada —</option><%- pilih(opsi.atasan) %></select></label>
+        <button class="tombol" type="submit">Simpan penempatan</button>
+      </form>
+    </details>
+    <% } %>
+  </section>
+
+  <% if (gaji) { %>
+  <section class="kartu" x-show="tab === 'gaji'" x-cloak x-transition.opacity>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Berlaku sejak</th><th>Gaji pokok</th><th>Alasan</th><th></th></tr></thead>
+      <tbody>
+        <% gaji.forEach(function (r) { %>
+          <tr>
+            <td><%= f.tanggal(r.tanggal_berlaku) %> <% if (r.berlaku) { %><span class="lencana lencana-ok">berlaku</span><% } %></td>
+            <td><%= f.rupiah(r.gaji_pokok) %></td><td><%= r.alasan || '' %></td>
+            <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/karyawan/<%= k.id %>/riwayat/gaji/<%= r.id %>/hapus" hx-confirm="Hapus riwayat gaji ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% if (k.status === 'aktif') { %>
+    <details class="tambah"><summary>Tambah perubahan gaji</summary>
+      <form method="post" action="/karyawan/<%= k.id %>/gaji">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+        <label>Gaji pokok (Rp) *<input type="text" name="gaji_pokok" inputmode="decimal" placeholder="5000000 atau 5000000.50" required></label>
+        <label>Alasan<input type="text" name="alasan"></label>
+        <button class="tombol" type="submit">Simpan gaji</button>
+      </form>
+    </details>
+    <% } %>
+  </section>
+  <% } %>
+
+  <% if (kontrak) { %>
+  <section class="kartu" x-show="tab === 'kontrak'" x-cloak x-transition.opacity>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Jenis</th><th>Mulai</th><th>Akhir</th><% if (bolehKelola) { %><th></th><% } %></tr></thead>
+      <tbody>
+        <% if (!kontrak.length) { %><tr><td colspan="4" class="kosong">Belum ada kontrak.</td></tr><% } %>
+        <% kontrak.forEach(function (r) { %>
+          <tr>
+            <td><%= r.jenis %></td><td><%= f.tanggal(r.tanggal_mulai) %></td><td><%= f.tanggal(r.tanggal_akhir) || '—' %></td>
+            <% if (bolehKelola) { %><td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/karyawan/<%= k.id %>/riwayat/kontrak/<%= r.id %>/hapus" hx-confirm="Hapus riwayat kontrak ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td><% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% if (bolehKelola && k.status === 'aktif') { %>
+    <details class="tambah"><summary>Tambah kontrak baru</summary>
+      <form method="post" action="/karyawan/<%= k.id %>/kontrak">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Jenis *<select name="jenis" required><option value="">— pilih —</option><option>PKWT</option><option>PKWTT</option><option>magang</option></select></label>
+        <label>Tanggal mulai *<input type="date" name="tanggal_mulai" required></label>
+        <label>Tanggal akhir (kosongkan untuk PKWTT)<input type="date" name="tanggal_akhir"></label>
+        <button class="tombol" type="submit">Simpan kontrak</button>
+      </form>
+    </details>
+    <% } %>
+  </section>
+  <% } %>
+
+  <% if (bolehAkun) { %>
+  <section class="kartu" x-show="tab === 'akun'" x-cloak x-transition.opacity>
+    <% if (akun) { %>
+      <dl class="rincian">
+        <dt>Username</dt><dd><%= akun.username %></dd>
+        <dt>Peran</dt><dd><%= akun.peran %></dd>
+        <dt>Status</dt><dd><%= akun.aktif ? 'Aktif' : 'Dicabut' %></dd>
+      </dl>
+    <% } else if (k.status === 'aktif') { %>
+      <form method="post" action="/karyawan/<%= k.id %>/akun" class="form-lebar">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Username *<input type="text" name="username" autocomplete="off" required></label>
+        <label>Password sementara * (min. 8 karakter)<input type="password" name="password" autocomplete="new-password" required></label>
+        <label>Peran *
+          <select name="peran" required>
+            <% peranAkun.forEach(function (p) { %><option value="<%= p %>"><%= p %></option><% }) %>
+          </select>
+        </label>
+        <button class="tombol" type="submit">Buat akun</button>
+      </form>
+    <% } else { %><p class="redup">Karyawan sudah keluar; tidak ada akun aktif.</p><% } %>
+  </section>
+  <% } %>
+
+  <% if (bolehKelola && k.status === 'aktif') { %>
+  <section class="kartu" x-show="tab === 'keluar'" x-cloak x-transition.opacity>
+    <p>Karyawan tidak dihapus. Statusnya menjadi <strong>keluar</strong>, login dicabut, dan seluruh riwayat tetap tersimpan.</p>
+    <form method="post" action="/karyawan/<%= k.id %>/keluar" class="form-lebar">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Tanggal keluar *<input type="date" name="tanggal_keluar" required></label>
+      <label>Alasan keluar *<textarea name="alasan_keluar" rows="2" required></textarea></label>
+      <button class="tombol tombol-bahaya" type="submit" @click="if (!confirm('Tandai karyawan ini sebagai keluar dan cabut login?')) $event.preventDefault()">Proses karyawan keluar</button>
+    </form>
+  </section>
+  <% } %>
+</div>
+<%- include('../partials/bawah') %>

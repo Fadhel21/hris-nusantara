@@ -1,0 +1,39 @@
+<%- include('../partials/atas', { judul: 'Karyawan' }) %>
+<div class="judul-halaman">
+  <h1>Karyawan</h1>
+  <% if (bolehKelola) { %><a class="tombol" href="/karyawan/baru">Tambah karyawan</a><% } %>
+</div>
+<form class="filter" method="get" action="/karyawan">
+  <input type="text" name="cari" value="<%= cari %>" placeholder="Cari nama atau nomor induk">
+  <select name="status">
+    <option value="">Semua status</option>
+    <option value="aktif" <%= status === 'aktif' ? 'selected' : '' %>>Aktif</option>
+    <option value="keluar" <%= status === 'keluar' ? 'selected' : '' %>>Keluar</option>
+  </select>
+  <button class="tombol tombol-sekunder" type="submit">Cari</button>
+</form>
+<div class="kartu tabel-bungkus">
+  <table class="tabel">
+    <thead><tr><th>Nomor induk</th><th>Nama</th><th>Jabatan</th><th>Departemen</th><th>Cabang</th><th>Status</th></tr></thead>
+    <tbody>
+      <% if (!baris.length) { %><tr><td colspan="6" class="kosong">Tidak ada data.</td></tr><% } %>
+      <% baris.forEach(function (b) { %>
+        <tr>
+          <td><a href="/karyawan/<%= b.id %>"><%= b.nomor_induk %></a></td>
+          <td><%= b.nama %></td>
+          <td><%= b.jabatan || '' %></td>
+          <td><%= b.departemen || '' %></td>
+          <td><%= b.cabang || '' %></td>
+          <td><span class="lencana <%= b.status === 'aktif' ? 'lencana-ok' : 'lencana-off' %>"><%= b.status %></span></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<div class="halaman">
+  <span class="redup"><%= total %> karyawan · halaman <%= nomorHalaman %> dari <%= jumlahHalaman %></span>
+  <% var qs = 'cari=' + encodeURIComponent(cari) + '&status=' + encodeURIComponent(status); %>
+  <% if (nomorHalaman > 1) { %><a href="/karyawan?<%= qs %>&halaman=<%= nomorHalaman - 1 %>">« Sebelumnya</a><% } %>
+  <% if (nomorHalaman < jumlahHalaman) { %><a href="/karyawan?<%= qs %>&halaman=<%= nomorHalaman + 1 %>">Berikutnya »</a><% } %>
+</div>
+<%- include('../partials/bawah') %>

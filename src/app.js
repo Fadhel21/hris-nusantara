@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const { muat } = require('./config/env');
 const menu = require('./config/menu');
+const format = require('./modules/karyawan/services/format');
 const { muatPengguna, wajibMasuk } = require('./middleware/auth');
 const { csrf } = require('./middleware/csrf');
 const { tidakDitemukan, tanganiError } = require('./middleware/error');
@@ -34,11 +35,13 @@ function buatApp() {
   app.use((req, res, next) => {
     res.locals.menu = req.pengguna ? menu.filter((m) => m.peran.includes(req.pengguna.peran)) : [];
     res.locals.halaman = req.path;
+    res.locals.fmt = { rupiah: format.rupiah, tanggal: format.tanggal };
     next();
   });
 
   app.use(require('./modules/pengguna/routes'));
   app.use(require('./modules/organisasi/routes'));
+  app.use(require('./modules/karyawan/routes'));
   app.get('/', wajibMasuk, (req, res) => res.render('beranda/index'));
 
   app.use(tidakDitemukan);

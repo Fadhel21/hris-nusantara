@@ -1,6 +1,10 @@
 // Koneksi PostgreSQL dan helper transaksi. Semua service memakai helper ini.
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
 const { muat } = require('./env');
+
+// DATE dibaca sebagai teks 'YYYY-MM-DD' (bukan objek Date) agar tidak bergeser oleh zona waktu server.
+// NUMERIC tetap berupa teks (bawaan pg), sehingga uang tidak pernah menjadi float JavaScript.
+types.setTypeParser(1082, (nilai) => nilai);
 
 let pool;
 

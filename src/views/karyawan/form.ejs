@@ -1,0 +1,58 @@
+<%
+  var v = function (n) { return nilai[n] === undefined || nilai[n] === null ? '' : String(nilai[n]); };
+  var pilih = function (daftar, n) { return daftar.map(function (o) { return '<option value="' + o.id + '"' + (String(o.id) === v(n) ? ' selected' : '') + '>' + o.label.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</option>'; }).join(''); };
+%>
+<%- include('../partials/atas', { judul: id ? 'Ubah karyawan' : 'Tambah karyawan' }) %>
+<div class="judul-halaman"><h1><%= id ? 'Ubah data karyawan' : 'Tambah karyawan' %></h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<form method="post" action="/karyawan<%= id ? '/' + id : '' %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <section class="kartu form-lebar blok">
+    <h2>Data pribadi</h2>
+    <label>Nama *<input type="text" name="nama" value="<%= v('nama') %>" required></label>
+    <label>NIK (16 digit)<input type="text" name="nik" value="<%= v('nik') %>" inputmode="numeric" autocomplete="off"></label>
+    <label>NPWP (15-16 digit)<input type="text" name="npwp" value="<%= v('npwp') %>" inputmode="numeric" autocomplete="off"></label>
+    <label>Tanggal lahir<input type="date" name="tanggal_lahir" value="<%= v('tanggal_lahir') %>"></label>
+    <label>Jenis kelamin
+      <select name="jenis_kelamin">
+        <option value="">— pilih —</option>
+        <option value="L" <%= v('jenis_kelamin') === 'L' ? 'selected' : '' %>>Laki-laki</option>
+        <option value="P" <%= v('jenis_kelamin') === 'P' ? 'selected' : '' %>>Perempuan</option>
+      </select>
+    </label>
+    <label>Alamat<textarea name="alamat" rows="2"><%= v('alamat') %></textarea></label>
+    <label>Telepon<input type="text" name="telepon" value="<%= v('telepon') %>"></label>
+    <label>Email<input type="text" name="email" value="<%= v('email') %>"></label>
+    <label>Bank<input type="text" name="bank" value="<%= v('bank') %>"></label>
+    <label>Nomor rekening<input type="text" name="nomor_rekening" value="<%= v('nomor_rekening') %>" inputmode="numeric" autocomplete="off"></label>
+    <% if (!id) { %><label>Tanggal masuk *<input type="date" name="tanggal_masuk" value="<%= v('tanggal_masuk') %>" required></label><% } %>
+  </section>
+
+  <% if (!id) { %>
+  <section class="kartu form-lebar blok">
+    <h2>Penempatan awal</h2>
+    <label>Cabang *<select name="cabang_id" required><option value="">— pilih —</option><%- pilih(opsi.cabang, 'cabang_id') %></select></label>
+    <label>Departemen *<select name="departemen_id" required><option value="">— pilih —</option><%- pilih(opsi.departemen, 'departemen_id') %></select></label>
+    <label>Jabatan *<select name="jabatan_id" required><option value="">— pilih —</option><%- pilih(opsi.jabatan, 'jabatan_id') %></select></label>
+    <label>Golongan<select name="golongan_id"><option value="">— tidak ada —</option><%- pilih(opsi.golongan, 'golongan_id') %></select></label>
+    <label>Atasan langsung<select name="atasan_id"><option value="">— tidak ada —</option><%- pilih(opsi.atasan, 'atasan_id') %></select></label>
+  </section>
+  <section class="kartu form-lebar blok">
+    <h2>Gaji dan kontrak awal</h2>
+    <label>Gaji pokok (Rp) *<input type="text" name="gaji_pokok" value="<%= v('gaji_pokok') %>" inputmode="decimal" placeholder="5000000 atau 5000000.50" required></label>
+    <label>Jenis kontrak *
+      <select name="jenis" required>
+        <option value="">— pilih —</option>
+        <% ['PKWT', 'PKWTT', 'magang'].forEach(function (j) { %><option value="<%= j %>" <%= v('jenis') === j ? 'selected' : '' %>><%= j %></option><% }) %>
+      </select>
+    </label>
+    <label>Tanggal akhir kontrak (kosongkan untuk PKWTT)<input type="date" name="tanggal_akhir" value="<%= v('tanggal_akhir') %>"></label>
+    <p class="redup">Penempatan, gaji, dan kontrak awal berlaku sejak tanggal masuk. Nomor induk dibuat otomatis.</p>
+  </section>
+  <% } %>
+  <div class="baris-tombol">
+    <button class="tombol" type="submit">Simpan</button>
+    <a class="tombol tombol-sekunder" href="<%= id ? '/karyawan/' + id : '/karyawan' %>">Batal</a>
+  </div>
+</form>
+<%- include('../partials/bawah') %>

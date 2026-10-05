@@ -54,3 +54,23 @@ textarea, select, input[type=number] { display:block; width:100%; margin-top:.3r
 .daftar-polos { list-style:none; margin:0; padding:0; }
 .pohon { margin:.3rem 0 0; padding-left:1.2rem; }
 .pohon li { margin:.4rem 0; }
+[x-cloak] { display:none !important; }
+.filter { display:flex; gap:.5rem; margin-bottom:1rem; flex-wrap:wrap; }
+.filter input[type=text] { margin:0; flex:1; min-width:180px; }
+.filter select { margin:0; width:auto; }
+.lencana { display:inline-block; font-size:.72rem; padding:.1rem .5rem; border-radius:999px; margin-left:.4rem; vertical-align:middle; }
+.lencana-ok { background:#dcf5e4; color:#146c2e; }
+.lencana-off { background:#eceff3; color:#5c6877; }
+.halaman { display:flex; gap:1rem; align-items:center; margin-top:.75rem; }
+.tab-daftar { display:flex; gap:.25rem; border-bottom:1px solid var(--garis); margin-bottom:1rem; overflow-x:auto; }
+.tab-daftar button { background:none; border:0; border-bottom:2px solid transparent; padding:.6rem 1rem; font:inherit; cursor:pointer; color:var(--redup); white-space:nowrap; }
+.tab-daftar button.aktif { color:var(--utama); border-bottom-color:var(--utama); }
+.rincian { display:grid; grid-template-columns:max-content 1fr; gap:.4rem 1.5rem; margin:0; }
+.rincian dt { color:var(--redup); }
+.rincian dd { margin:0; word-break:break-word; }
+details.tambah { margin-top:1rem; }
+details.tambah summary { cursor:pointer; color:var(--utama); }
+details.tambah form { max-width:560px; margin-top:.75rem; }
+.tombol-bahaya { background:var(--galat); }
+.tombol-bahaya:hover { background:#8f1c12; }
+input[type=date] { display:block; width:100%; margin-top:.3rem; padding:.55rem .7rem; border:1px solid var(--garis); border-radius:6px; font:inherit; }

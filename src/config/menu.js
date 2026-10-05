@@ -5,6 +5,8 @@ const HR = ['admin', 'hr'];
 
 module.exports = [
   { label: 'Beranda', href: '/', peran: SEMUA },
+  { grup: 'Karyawan', label: 'Daftar karyawan', href: '/karyawan', peran: ['admin', 'hr', 'atasan'] },
+  { grup: 'Karyawan', label: 'Profil saya', href: '/karyawan/saya', peran: ['hr', 'atasan', 'karyawan'] },
   { grup: 'Organisasi', label: 'Struktur', href: '/organisasi/struktur', peran: HR },
   { grup: 'Organisasi', label: 'Perusahaan', href: '/organisasi/perusahaan', peran: HR },
   { grup: 'Organisasi', label: 'Cabang', href: '/organisasi/cabang', peran: HR },

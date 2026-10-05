@@ -54,13 +54,13 @@ async function ambilAktif(id) {
   return p ? { id: p.id, username: p.username, peran: p.peran, karyawanId: p.karyawan_id } : null;
 }
 
-async function buat({ username, password, peranKode, email = null }, exec = db) {
+async function buat({ username, password, peranKode, email = null, karyawanId = null }, exec = db) {
   if (!password || password.length < 8) throw new GalatAuth('Password minimal 8 karakter.');
   const hash = await bcrypt.hash(password, 10);
   const { rows } = await exec.query(
-    `INSERT INTO pengguna (username, email, password_hash, peran_id)
-     VALUES ($1, $2, $3, (SELECT id FROM peran WHERE kode = $4 AND deleted_at IS NULL))
-     RETURNING id`, [username, email, hash, peranKode]);
+    `INSERT INTO pengguna (username, email, password_hash, peran_id, karyawan_id)
+     VALUES ($1, $2, $3, (SELECT id FROM peran WHERE kode = $4 AND deleted_at IS NULL), $5)
+     RETURNING id`, [username, email, hash, peranKode, karyawanId]);
   return rows[0].id;
 }
 
