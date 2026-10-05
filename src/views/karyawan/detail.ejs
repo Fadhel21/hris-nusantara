@@ -36,6 +36,8 @@
     <% if (keluarga) { %><button type="button" :class="{ 'aktif': tab === 'keluarga' }" @click="tab = 'keluarga'">Keluarga</button><% } %>
     <% if (pendidikan) { %><button type="button" :class="{ 'aktif': tab === 'pendidikan' }" @click="tab = 'pendidikan'">Pendidikan</button><% } %>
     <% if (dokumen) { %><button type="button" :class="{ 'aktif': tab === 'dokumen' }" @click="tab = 'dokumen'">Dokumen</button><% } %>
+    <% if (komponen) { %><button type="button" :class="{ 'aktif': tab === 'komponen' }" @click="tab = 'komponen'">Komponen gaji</button><% } %>
+    <% if (kepesertaan) { %><button type="button" :class="{ 'aktif': tab === 'bpjs' }" @click="tab = 'bpjs'">BPJS</button><% } %>
     <% if (bolehAkun) { %><button type="button" :class="{ 'aktif': tab === 'akun' }" @click="tab = 'akun'">Akun login</button><% } %>
     <% if (bolehKelola && k.status === 'aktif') { %><button type="button" :class="{ 'aktif': tab === 'keluar' }" @click="tab = 'keluar'">Keluar</button><% } %>
   </div>
@@ -234,6 +236,52 @@
       </form>
     </details>
     <% } %>
+  </section>
+  <% } %>
+
+  <% if (komponen) { %>
+  <section class="kartu" x-show="tab === 'komponen'" x-cloak x-transition.opacity>
+    <p class="redup">Tunjangan dan potongan tetap per karyawan, bertanggal berlaku. Nominal diprorata menurut hari kerja. Isi 0 untuk menghentikan komponen.</p>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Komponen</th><th>Jenis</th><th>Berlaku sejak</th><th>Nominal</th><th></th></tr></thead>
+      <tbody>
+        <% if (!komponen.length) { %><tr><td colspan="5" class="kosong">Belum ada komponen gaji untuk karyawan ini.</td></tr><% } %>
+        <% komponen.forEach(function (r) { %>
+          <tr>
+            <td><%= r.nama %> <span class="redup"><%= r.kode %></span></td><td><%= r.jenis %></td>
+            <td><%= f.tanggal(r.tanggal_berlaku) %> <% if (r.berlaku) { %><span class="lencana lencana-ok">berlaku</span><% } %></td>
+            <td><%= f.rupiah(r.nominal) %></td>
+            <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/karyawan/<%= k.id %>/komponen/<%= r.id %>/hapus" hx-confirm="Hapus riwayat komponen ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% if (k.status === 'aktif') { %>
+    <details class="tambah"><summary>Tambah / ubah nominal komponen</summary>
+      <% if (!komponenOpsi.length) { %><p class="redup">Belum ada komponen gaji. Buat dulu di menu Komponen gaji.</p><% } else { %>
+      <form method="post" action="/karyawan/<%= k.id %>/komponen">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Komponen *<select name="komponen_id" required><option value="">— pilih —</option><% komponenOpsi.forEach(function (o) { %><option value="<%= o.id %>"><%= o.nama %> (<%= o.jenis %>)</option><% }) %></select></label>
+        <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+        <label>Nominal (Rp) *<input type="text" name="nominal" inputmode="decimal" placeholder="500000 atau 500000.50" required></label>
+        <button class="tombol" type="submit">Simpan</button>
+      </form>
+      <% } %>
+    </details>
+    <% } %>
+  </section>
+  <% } %>
+
+  <% if (kepesertaan) { %>
+  <section class="kartu" x-show="tab === 'bpjs'" x-cloak x-transition.opacity>
+    <p class="redup">Program BPJS yang diikuti karyawan ini. Tarif diatur di menu Pengaturan penggajian.</p>
+    <form method="post" action="/karyawan/<%= k.id %>/bpjs" class="form-lebar">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% kepesertaan.forEach(function (p) { %>
+        <label class="centang"><input type="checkbox" name="program" value="<%= p.program %>" <%= p.ikut ? 'checked' : '' %>> <%= p.nama %></label>
+      <% }) %>
+      <button class="tombol" type="submit">Simpan kepesertaan</button>
+    </form>
   </section>
   <% } %>
 

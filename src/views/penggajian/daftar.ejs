@@ -1,0 +1,39 @@
+<%- include('../partials/atas', { judul: 'Periode gaji' }) %>
+<div class="judul-halaman"><h1>Periode gaji</h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<p class="info-catatan">Periode = bulan kalender. Gaji dihitung setelah bulan berakhir. <strong>PPh 21 dan lembur belum termasuk</strong> (menyusul).</p>
+
+<div class="kartu tabel-bungkus">
+  <table class="tabel">
+    <thead><tr><th>Periode</th><th>Rentang</th><th>Slip</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% if (!daftar.length) { %><tr><td colspan="5" class="kosong">Belum ada periode gaji.</td></tr><% } %>
+      <% daftar.forEach(function (p) { %>
+        <tr>
+          <td><a href="/penggajian/periode/<%= p.id %>"><%= namaBulan[p.bulan] %> <%= p.tahun %></a></td>
+          <td><%= fmt.tanggal(p.tanggal_awal) %> s.d. <%= fmt.tanggal(p.tanggal_akhir) %></td>
+          <td><%= p.jumlah_slip %></td>
+          <td>
+            <span class="lencana <%= p.status === 'terkunci' ? 'lencana-ok' : 'lencana-tunggu' %>"><%= p.status %></span>
+            <% if (p.minta_buka_pada) { %><span class="lencana lencana-tolak">minta buka kunci</span><% } %>
+          </td>
+          <td class="aksi"><a href="/penggajian/periode/<%= p.id %>">Buka</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<details class="tambah" open><summary>Buat periode</summary>
+  <form method="post" action="/penggajian/periode">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Tahun *<input type="number" name="tahun" value="<%= isian.tahun || bulanIni.slice(0, 4) %>" min="2000" max="2100" step="1" required></label>
+    <label>Bulan *
+      <select name="bulan" required>
+        <% for (var b = 1; b <= 12; b++) { %><option value="<%= b %>" <%= String(isian.bulan || Number(bulanIni.slice(5))) === String(b) ? 'selected' : '' %>><%= namaBulan[b] %></option><% } %>
+      </select>
+    </label>
+    <button class="tombol" type="submit">Buat periode</button>
+  </form>
+</details>
+<%- include('../partials/bawah') %>

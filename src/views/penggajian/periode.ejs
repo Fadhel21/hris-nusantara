@@ -1,0 +1,118 @@
+<%- include('../partials/atas', { judul: 'Gaji ' + judulPeriode }) %>
+<div class="judul-halaman">
+  <div>
+    <h1>Gaji <%= judulPeriode %></h1>
+    <span class="redup"><%= fmt.tanggal(periode.tanggal_awal) %> s.d. <%= fmt.tanggal(periode.tanggal_akhir) %></span>
+    <span class="lencana <%= periode.status === 'terkunci' ? 'lencana-ok' : 'lencana-tunggu' %>"><%= periode.status %></span>
+  </div>
+  <a class="tombol tombol-sekunder" href="/penggajian">Kembali</a>
+</div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<% if (pesan) { %><p class="info" role="status"><%= pesan %></p><% } %>
+<p class="info-catatan"><strong>Gaji bersih belum memperhitungkan PPh 21 dan lembur</strong> (menyusul). Slip karyawan baru terlihat oleh karyawan setelah periode dikunci.</p>
+
+<section class="kartu blok">
+  <h2>Ringkasan</h2>
+  <div class="ringkasan">
+    <div><strong><%= slip.length %></strong><span>slip</span></div>
+    <div><strong><%= fmt.rupiah(total.bruto) %></strong><span>total pendapatan</span></div>
+    <div><strong><%= fmt.rupiah(total.potongan) %></strong><span>total potongan</span></div>
+    <div><strong><%= fmt.rupiah(total.bersih) %></strong><span>total gaji bersih</span></div>
+  </div>
+
+  <% if (periode.status === 'terbuka') { %>
+    <% if (!sudahBerakhir) { %>
+      <p class="redup">Periode belum berakhir (hari ini <%= fmt.tanggal(hariIni) %>). Perhitungan dan penguncian bisa dilakukan setelah <%= fmt.tanggal(periode.tanggal_akhir) %>.</p>
+    <% } %>
+    <div class="baris-tombol" x-data>
+      <form method="post" action="/penggajian/periode/<%= periode.id %>/hitung">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="tombol" type="submit" <%= sudahBerakhir ? '' : 'disabled' %>><%= slip.length ? 'Hitung ulang' : 'Hitung gaji' %></button>
+      </form>
+      <% if (slip.length) { %>
+      <form method="post" action="/penggajian/periode/<%= periode.id %>/kunci">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="tombol tombol-bahaya" type="submit" <%= sudahBerakhir ? '' : 'disabled' %>
+                @click="if (!confirm('Kunci periode? Setelah dikunci slip tidak bisa diubah dan terlihat oleh karyawan.')) $event.preventDefault()">Kunci periode</button>
+      </form>
+      <% } %>
+    </div>
+  <% } else { %>
+    <p>Dikunci pada <%= new Date(periode.dikunci_pada).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) %> WIB. Koreksi dilakukan lewat penyesuaian pada periode berikutnya.</p>
+    <% if (adaPermintaan) { %>
+      <div class="kartu" style="margin-top:.75rem">
+        <strong>Ada permintaan buka kunci</strong>
+        <p>Alasan: <%= periode.minta_buka_alasan %></p>
+        <% if (pengguna.peran === 'admin') { %>
+          <form method="post" action="/penggajian/periode/<%= periode.id %>/putuskan-buka-kunci" class="form-lebar">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label>Catatan (wajib bila menolak)<textarea name="catatan" rows="2"></textarea></label>
+            <div class="baris-tombol">
+              <button class="tombol" type="submit" name="keputusan" value="setuju">Setujui buka kunci</button>
+              <button class="tombol tombol-bahaya" type="submit" name="keputusan" value="tolak">Tolak</button>
+            </div>
+          </form>
+          <p class="redup">Anda tidak dapat menyetujui permintaan yang Anda ajukan sendiri.</p>
+        <% } else { %><p class="redup">Menunggu keputusan administrator.</p><% } %>
+      </div>
+    <% } else { %>
+      <details class="tambah"><summary>Ajukan buka kunci</summary>
+        <form method="post" action="/penggajian/periode/<%= periode.id %>/minta-buka-kunci">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label>Alasan *<textarea name="alasan" rows="2" required></textarea></label>
+          <p class="redup">Dibutuhkan persetujuan administrator lain. Dicatat di jejak audit.</p>
+          <button class="tombol" type="submit">Ajukan</button>
+        </form>
+      </details>
+    <% } %>
+  <% } %>
+</section>
+
+<section class="kartu blok">
+  <h2>Slip</h2>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Nomor induk</th><th>Nama</th><th>Hari kerja</th><th>Terlambat</th><th>Pendapatan</th><th>Potongan</th><th>Gaji bersih</th><th></th></tr></thead>
+    <tbody>
+      <% if (!slip.length) { %><tr><td colspan="8" class="kosong">Belum dihitung.</td></tr><% } %>
+      <% slip.forEach(function (s) { %>
+        <tr>
+          <td><%= s.nomor_induk %></td><td><%= s.nama %></td>
+          <td><%= s.hari_kerja_bekerja %>/<%= s.hari_kerja_periode %></td>
+          <td><%= s.menit_terlambat ? s.menit_terlambat + ' mnt' : '' %></td>
+          <td><%= fmt.rupiah(s.gaji_bruto) %></td><td><%= fmt.rupiah(s.total_potongan) %></td><td><strong><%= fmt.rupiah(s.gaji_bersih) %></strong></td>
+          <td class="aksi"><a href="/penggajian/slip/<%= s.id %>">Slip</a> · <a href="/penggajian/slip/<%= s.id %>/pdf" target="_blank" rel="noopener">PDF</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="kartu blok">
+  <h2>Penyesuaian periode</h2>
+  <p class="redup">Bonus, koreksi atas kesalahan periode sebelumnya, atau potongan satu kali. Ikut dihitung saat gaji dihitung.</p>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Karyawan</th><th>Jenis</th><th>Keterangan</th><th>Nominal</th><th></th></tr></thead>
+    <tbody>
+      <% if (!penyesuaian.length) { %><tr><td colspan="5" class="kosong">Belum ada penyesuaian.</td></tr><% } %>
+      <% penyesuaian.forEach(function (a) { %>
+        <tr>
+          <td><%= a.nomor_induk %> - <%= a.nama %></td><td><%= a.jenis %></td><td><%= a.keterangan %></td><td><%= fmt.rupiah(a.nominal) %></td>
+          <td class="aksi"><% if (periode.status === 'terbuka') { %><button type="button" class="tautan-bahaya" hx-post="/penggajian/periode/<%= periode.id %>/penyesuaian/<%= a.id %>/hapus" hx-confirm="Hapus penyesuaian ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button><% } %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+  <% if (periode.status === 'terbuka') { %>
+  <details class="tambah"><summary>Tambah penyesuaian</summary>
+    <form method="post" action="/penggajian/periode/<%= periode.id %>/penyesuaian">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Karyawan *<select name="karyawan_id" required><option value="">— pilih —</option><% karyawan.forEach(function (k) { %><option value="<%= k.id %>"><%= k.nomor_induk %> - <%= k.nama %></option><% }) %></select></label>
+      <label>Jenis *<select name="jenis" required><option value="pendapatan">Pendapatan (menambah)</option><option value="potongan">Potongan (mengurangi)</option></select></label>
+      <label>Keterangan *<input type="text" name="keterangan" maxlength="200" required></label>
+      <label>Nominal (Rp) *<input type="text" name="nominal" inputmode="decimal" placeholder="250000 atau 250000.50" required></label>
+      <button class="tombol" type="submit">Simpan</button>
+    </form>
+  </details>
+  <% } %>
+</section>
+<%- include('../partials/bawah') %>

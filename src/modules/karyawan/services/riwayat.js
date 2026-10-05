@@ -6,6 +6,7 @@ const { GalatBisnis } = require('../../../config/galat');
 const audit = require('../../pengguna/services/audit');
 const akses = require('./akses');
 const validasi = require('./validasi');
+const kunciGaji = require('../../penggajian/services/kunci');
 
 const JENIS = {
   penempatan: { tabel: 'riwayat_penempatan', kolomTanggal: 'tanggal_berlaku', sisaMinimal: 1, label: 'penempatan' },
@@ -133,6 +134,7 @@ async function tambahGaji(pengguna, karyawanId, input) {
   try {
     await db.transaksi(async (c) => {
       await kunciKaryawan(c, karyawanId, nilai.tanggal_berlaku);
+      await kunciGaji.pastikanBelumTerkunci(c, nilai.tanggal_berlaku, 'Gaji pokok ini');
       await sisipGaji(c, karyawanId, nilai.tanggal_berlaku, nilai.gaji_pokok, nilai.alasan);
       await audit.catat({ penggunaId: pengguna.id, aksi: 'tambah_gaji', entitas: 'karyawan', entitasId: karyawanId, sesudah: nilai }, c);
     });
@@ -160,6 +162,7 @@ async function hapus(pengguna, karyawanId, jenis, riwayatId) {
     const { rows } = await c.query(
       `SELECT * FROM ${def.tabel} WHERE id = $1 AND karyawan_id = $2 AND deleted_at IS NULL FOR UPDATE`, [riwayatId, karyawanId]);
     if (!rows[0]) throw new GalatBisnis('Riwayat tidak ditemukan.', 404);
+    if (jenis === 'gaji') await kunciGaji.pastikanBelumTerkunci(c, rows[0].tanggal_berlaku, 'Gaji pokok ini');
     const { rows: hitung } = await c.query(
       `SELECT count(*)::int AS n FROM ${def.tabel} WHERE karyawan_id = $1 AND deleted_at IS NULL`, [karyawanId]);
     if (hitung[0].n <= def.sisaMinimal) throw new GalatBisnis(`Riwayat ${def.label} terakhir tidak dapat dihapus.`, 409);

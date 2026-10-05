@@ -2,6 +2,7 @@ const svc = require('../services/karyawan');
 const riwayat = require('../services/riwayat');
 const profil = require('../services/profil');
 const validasi = require('../services/validasi');
+const gajiPengaturan = require('../../penggajian/services/pengaturan');
 const akses = require('../services/akses');
 const { GalatBisnis } = require('../../../config/galat');
 
@@ -85,8 +86,17 @@ const tambahGaji = aksiDetail((req) => riwayat.tambahGaji(req.pengguna, req.para
 const tambahKontrak = aksiDetail((req) => riwayat.tambahKontrak(req.pengguna, req.params.id, req.body));
 const tambahKeluarga = aksiDetail((req) => profil.tambah(req.pengguna, req.params.id, 'keluarga', req.body));
 const tambahPendidikan = aksiDetail((req) => profil.tambah(req.pengguna, req.params.id, 'pendidikan', req.body));
+const tambahKomponen = aksiDetail((req) => gajiPengaturan.tambahKomponenKaryawan(req.pengguna, req.params.id, req.body));
+const aturBpjs = aksiDetail((req) => gajiPengaturan.aturKepesertaan(req.pengguna, req.params.id, req.body));
 const keluarkan = aksiDetail((req) => svc.keluarkan(req.pengguna, req.params.id, req.body));
 const buatAkun = aksiDetail((req) => svc.buatAkun(req.pengguna, req.params.id, req.body));
+
+async function hapusKomponen(req, res, next) {
+  try {
+    await gajiPengaturan.hapusKomponenKaryawan(req.pengguna, req.params.id, req.params.rid);
+    res.status(200).send('');
+  } catch (err) { next(err); }
+}
 
 // Dipanggil lewat HTMX: baris riwayat dihapus dari tabel bila berhasil.
 async function hapusRiwayat(req, res, next) {
@@ -98,5 +108,6 @@ async function hapusRiwayat(req, res, next) {
 
 module.exports = {
   daftar, saya, detail, formBaru, simpanBaru, formUbah, simpanUbah,
-  tambahPenempatan, tambahGaji, tambahKontrak, tambahKeluarga, tambahPendidikan, keluarkan, buatAkun, hapusRiwayat,
+  tambahPenempatan, tambahGaji, tambahKontrak, tambahKeluarga, tambahPendidikan, tambahKomponen, aturBpjs, hapusKomponen,
+  keluarkan, buatAkun, hapusRiwayat,
 };

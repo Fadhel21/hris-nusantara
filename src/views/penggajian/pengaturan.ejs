@@ -1,0 +1,58 @@
+<%- include('../partials/atas', { judul: 'Pengaturan penggajian' }) %>
+<div class="judul-halaman"><h1>Pengaturan penggajian</h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<p class="info-catatan">Tidak ada tarif bawaan: semua nilai diisi oleh pemilik dengan tanggal berlaku. Tarif yang berlaku untuk suatu periode adalah yang berlaku pada <strong>tanggal terakhir periode</strong>. Data yang berlaku pada/sebelum periode yang sudah dikunci tidak dapat ditambah atau dihapus.</p>
+
+<section class="kartu blok">
+  <h2>Potongan keterlambatan</h2>
+  <p class="redup">Nominal per menit keterlambatan (Rp). Wajib diisi sebelum gaji dapat dihitung; isi 0 bila keterlambatan tidak dipotong.</p>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Berlaku sejak</th><th>Nominal per menit</th><th></th></tr></thead>
+    <tbody>
+      <% if (!parameter.length) { %><tr><td colspan="3" class="kosong">Belum diisi.</td></tr><% } %>
+      <% parameter.forEach(function (p) { %>
+        <tr><td><%= fmt.tanggal(p.tanggal_berlaku) %></td><td><%= fmt.rupiah(p.nilai) %></td>
+          <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/penggajian/pengaturan/parameter/<%= p.id %>/hapus" hx-confirm="Hapus nilai ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td></tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+  <details class="tambah"><summary>Tambah nilai</summary>
+    <form method="post" action="/penggajian/pengaturan/parameter">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="kunci" value="<%= kunciTerlambat %>">
+      <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+      <label>Nominal per menit (Rp) *<input type="text" name="nilai" inputmode="decimal" placeholder="1000 atau 0" required></label>
+      <button class="tombol" type="submit">Simpan</button>
+    </form>
+  </details>
+</section>
+
+<section class="kartu blok">
+  <h2>Tarif BPJS</h2>
+  <p class="redup">Tarif dalam persen (maks. 4 desimal). Batas upah atas bersifat opsional (kosong = tanpa batas). Hanya karyawan yang dicentang di tab BPJS pada data karyawan yang dipotong.</p>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Program</th><th>Berlaku sejak</th><th>Karyawan (%)</th><th>Perusahaan (%)</th><th>Batas upah atas</th><th></th></tr></thead>
+    <tbody>
+      <% if (!tarif.length) { %><tr><td colspan="6" class="kosong">Belum ada tarif BPJS.</td></tr><% } %>
+      <% tarif.forEach(function (t) { %>
+        <tr>
+          <td><%= namaProgram[t.program] %></td><td><%= fmt.tanggal(t.tanggal_berlaku) %></td>
+          <td><%= t.tarif_karyawan %></td><td><%= t.tarif_perusahaan %></td><td><%= t.batas_upah_atas ? fmt.rupiah(t.batas_upah_atas) : 'tanpa batas' %></td>
+          <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/penggajian/pengaturan/tarif-bpjs/<%= t.id %>/hapus" hx-confirm="Hapus tarif ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+  <details class="tambah"><summary>Tambah tarif</summary>
+    <form method="post" action="/penggajian/pengaturan/tarif-bpjs">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Program *<select name="program" required><option value="">— pilih —</option><% program.forEach(function (p) { %><option value="<%= p %>"><%= namaProgram[p] %></option><% }) %></select></label>
+      <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+      <label>Tarif karyawan (%) *<input type="text" name="tarif_karyawan" inputmode="decimal" placeholder="mis. 1 atau 0.2400" required></label>
+      <label>Tarif perusahaan (%) *<input type="text" name="tarif_perusahaan" inputmode="decimal" placeholder="mis. 4 atau 0" required></label>
+      <label>Batas upah atas (Rp)<input type="text" name="batas_upah_atas" inputmode="decimal" placeholder="kosongkan bila tanpa batas"></label>
+      <button class="tombol" type="submit">Simpan</button>
+    </form>
+  </details>
+</section>
+<%- include('../partials/bawah') %>

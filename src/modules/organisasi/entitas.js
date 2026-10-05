@@ -79,6 +79,24 @@ const entitas = {
       { tabel: 'saldo_cuti_mutasi', kolom: 'jenis_cuti_id', pesan: 'sudah memiliki saldo' },
     ],
   },
+  komponen_gaji: {
+    tabel: 'komponen_gaji', judul: 'Komponen gaji', urut: 't.jenis, t.nama',
+    fields: [
+      { nama: 'kode', label: 'Kode', tipe: 'text', wajib: true },
+      { nama: 'nama', label: 'Nama', tipe: 'text', wajib: true },
+      {
+        nama: 'jenis', label: 'Jenis', tipe: 'select', wajib: true,
+        opsi: [{ id: 'tunjangan', label: 'Tunjangan (menambah gaji)' }, { id: 'potongan', label: 'Potongan (mengurangi gaji)' }],
+      },
+      {
+        nama: 'masuk_dasar_bpjs', label: 'Masuk dasar upah BPJS', tipe: 'select', wajib: true,
+        opsi: [{ id: 'false', label: 'Tidak' }, { id: 'true', label: 'Ya (hanya untuk tunjangan)' }],
+      },
+    ],
+    kolom: ['kode', 'nama', 'jenis', 'masuk_dasar_bpjs'],
+    unik: 'Kode komponen gaji sudah dipakai.',
+    dipakai: [{ tabel: 'riwayat_komponen_karyawan', kolom: 'komponen_id', pesan: 'sudah dipakai pada gaji karyawan' }],
+  },
   golongan: {
     tabel: 'golongan', judul: 'Golongan', urut: 't.urutan',
     fields: [

@@ -5,6 +5,7 @@ const { GalatBisnis } = require('../../../config/galat');
 const pengajuan = require('../../persetujuan/services/pengajuan');
 const { tanggalValid } = require('../../karyawan/services/format');
 const catat = require('./catat');
+const kunciGaji = require('../../penggajian/services/kunci');
 const { menitDariJam, lokal } = require('./waktu');
 
 const JAM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -37,6 +38,7 @@ async function ajukan(pengguna, input) {
     const zona = await catat.zonaSaatIni(c, karyawanId);
     if (!zona) throw new GalatBisnis('Penempatan cabang Anda belum diatur. Hubungi HR.', 409);
     if (tanggal > lokal(new Date(), zona).tanggal) throw new GalatBisnis('Koreksi hanya untuk tanggal hari ini atau yang sudah lewat.');
+    await kunciGaji.pastikanTanggalBelumTerkunci(c, tanggal, 'Koreksi absensi ini');
     const { rowCount } = await c.query(
       `SELECT 1 FROM pengajuan_koreksi pk JOIN pengajuan p ON p.id = pk.pengajuan_id
         WHERE p.karyawan_id = $1 AND pk.tanggal = $2 AND p.status = 'menunggu' AND p.deleted_at IS NULL`, [karyawanId, tanggal]);
@@ -75,6 +77,8 @@ async function saatDisetujui(c, p) {
     `SELECT tanggal, to_char(jam_masuk, 'HH24:MI') AS jam_masuk, to_char(jam_pulang, 'HH24:MI') AS jam_pulang, zona_waktu
        FROM pengajuan_koreksi WHERE pengajuan_id = $1`, [p.id]);
   const pk = rows[0];
+  // Periode gaji bisa saja dikunci sejak pengajuan dibuat; koreksi tidak boleh mengubah hasil yang sudah dikunci.
+  await kunciGaji.pastikanTanggalBelumTerkunci(c, pk.tanggal, 'Koreksi absensi ini');
   const { rows: lama } = await c.query(
     'SELECT id, waktu_masuk, waktu_pulang FROM absensi_koreksi WHERE karyawan_id = $1 AND tanggal = $2 AND deleted_at IS NULL FOR UPDATE',
     [p.karyawan_id, pk.tanggal]);

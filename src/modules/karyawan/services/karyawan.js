@@ -8,6 +8,7 @@ const validasi = require('./validasi');
 const riwayat = require('./riwayat');
 const profil = require('./profil');
 const persetujuan = require('../../persetujuan/services/pengajuan');
+const gajiPengaturan = require('../../penggajian/services/pengaturan');
 const dokumen = require('./dokumen');
 const { samarkan, formatNomorInduk } = require('./format');
 
@@ -78,6 +79,10 @@ async function detail(pengguna, id) {
     keluarga: sensitif ? await profil.daftar('keluarga', id) : null,
     pendidikan: sensitif ? await profil.daftar('pendidikan', id) : null,
     dokumen: sensitif ? await dokumen.daftar(id) : null,
+    // Komponen gaji dan kepesertaan BPJS: hanya admin/HR.
+    komponen: pengelola ? await gajiPengaturan.daftarKomponenKaryawan(id) : null,
+    kepesertaan: pengelola ? await gajiPengaturan.kepesertaan(id) : null,
+    komponenOpsi: pengelola ? await gajiPengaturan.daftarKomponenAktif() : null,
     akun: null,
   };
   if (hasil.bolehAkun) {

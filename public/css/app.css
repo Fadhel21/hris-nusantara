@@ -97,3 +97,5 @@ input[type=month], input[type=time] { display:block; margin-top:.3rem; padding:.
 .tab-tautan { padding:.6rem 1rem; text-decoration:none; color:var(--redup); border-bottom:2px solid transparent; white-space:nowrap; }
 .tab-tautan.aktif { color:var(--utama); border-bottom-color:var(--utama); }
 .info { color:#146c2e; background:#dcf5e4; border-radius:6px; padding:.5rem .75rem; }
+.info-catatan { background:#fff8e1; border:1px solid #f1deaa; color:#6b4e00; border-radius:6px; padding:.5rem .75rem; margin:0 0 1rem; }
+.tabel .aksi strong { font-weight:600; }

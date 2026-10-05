@@ -5,6 +5,7 @@ const { GalatBisnis } = require('../../../config/galat');
 const audit = require('../../pengguna/services/audit');
 const { tanggalValid } = require('../../karyawan/services/format');
 const { menitDariJam } = require('./waktu');
+const kunciGaji = require('../../penggajian/services/kunci');
 
 const KUNCI_RETENSI = 'retensi_foto_absensi_bulan';
 const HARI_INI_SQL = "(now() AT TIME ZONE 'Asia/Jakarta')::date";
@@ -105,6 +106,7 @@ async function tambahLibur(pengguna, input) {
   if (keterangan.length > 200) throw new GalatBisnis('Keterangan maksimal 200 karakter.');
   try {
     await db.transaksi(async (c) => {
+      await kunciGaji.pastikanTanggalBelumTerkunci(c, tanggal, 'Hari libur ini');
       const { rows } = await c.query('INSERT INTO hari_libur (tanggal, keterangan) VALUES ($1, $2) RETURNING id', [tanggal, keterangan]);
       await audit.catat({ penggunaId: pengguna.id, aksi: 'tambah_libur', entitas: 'pengaturan.hari_libur', entitasId: rows[0].id, sesudah: { tanggal, keterangan } }, c);
     });
@@ -119,6 +121,7 @@ async function hapusLibur(pengguna, id) {
   await db.transaksi(async (c) => {
     const { rows } = await c.query('SELECT tanggal, keterangan FROM hari_libur WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [id]);
     if (!rows[0]) throw new GalatBisnis('Hari libur tidak ditemukan.', 404);
+    await kunciGaji.pastikanTanggalBelumTerkunci(c, rows[0].tanggal, 'Hari libur ini');
     await c.query('UPDATE hari_libur SET deleted_at = now(), updated_at = now() WHERE id = $1', [id]);
     await audit.catat({ penggunaId: pengguna.id, aksi: 'hapus_libur', entitas: 'pengaturan.hari_libur', entitasId: id, sebelum: rows[0] }, c);
   });

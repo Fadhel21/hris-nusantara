@@ -171,24 +171,35 @@ async function rekapTim(pengguna, bulanParam) {
        LEFT JOIN cabang c ON c.id = p.cabang_id
       WHERE k.deleted_at IS NULL AND k.tanggal_masuk <= $1 AND (k.tanggal_keluar IS NULL OR k.tanggal_keluar >= $2) AND ${kondisi}
       ORDER BY k.nomor_induk`, params);
+  const rekap = await rekapUntuk(daftar, awal, akhir);
+  const baris = daftar.map((k) => ({ id: k.id, nomor_induk: k.nomor_induk, nama: k.nama, ringkasan: rekap.get(String(k.id)).ringkasan }));
+  return { bulan, baris };
+}
+
+// Rekap harian + ringkasan untuk sekumpulan karyawan pada rentang tanggal. Dipakai rekap tim DAN penggajian,
+// sehingga keterlambatan di slip persis sama dengan yang tampil di rekap.
+//   daftar: [{ id, tanggal_masuk, tanggal_keluar, zona }]  ->  Map(String(id) -> { harian, ringkasan })
+async function rekapUntuk(daftar, awal, akhir) {
+  const ids = daftar.map((d) => d.id);
   const [jadwal, libur, catatan, penyesuaian] = await Promise.all([
     pengaturan.jadwalUntukHitung(), pengaturan.liburDalamRentang(awal, akhir),
-    ambilCatatan(daftar.map((d) => d.id), awal, akhir), ambilPenyesuaian(daftar.map((d) => d.id), awal, akhir),
+    ambilCatatan(ids, awal, akhir), ambilPenyesuaian(ids, awal, akhir),
   ]);
   const perKaryawan = new Map();
   for (const c of catatan) {
     if (!perKaryawan.has(String(c.karyawan_id))) perKaryawan.set(String(c.karyawan_id), []);
     perKaryawan.get(String(c.karyawan_id)).push(c);
   }
-  const baris = daftar.map((k) => {
+  const hasil = new Map();
+  for (const k of daftar) {
     const harian = waktu.susunHarian({
       awal, akhir, hariIni: waktu.lokal(new Date(), k.zona).tanggal, jadwal, libur,
       catatan: perKaryawan.get(String(k.id)) || [], mulaiKerja: k.tanggal_masuk, selesaiKerja: k.tanggal_keluar,
       ...penyesuaianKaryawan(penyesuaian, k.id),
     });
-    return { id: k.id, nomor_induk: k.nomor_induk, nama: k.nama, ringkasan: waktu.ringkas(harian) };
-  });
-  return { bulan, baris };
+    hasil.set(String(k.id), { harian, ringkasan: waktu.ringkas(harian) });
+  }
+  return hasil;
 }
 
 // Foto absen boleh dilihat oleh yang berhak melihat karyawannya (diri sendiri, atasan, HR).
@@ -200,4 +211,4 @@ async function untukDibukaFoto(pengguna, catatId) {
   return jalurAman(rows[0].foto_path);
 }
 
-module.exports = { statusHariIni, catat, riwayat, rekapTim, untukDibukaFoto, bulanBerjalan, zonaSaatIni };
+module.exports = { statusHariIni, catat, riwayat, rekapTim, rekapUntuk, untukDibukaFoto, bulanBerjalan, zonaSaatIni };

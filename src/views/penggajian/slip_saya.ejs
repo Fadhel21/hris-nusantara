@@ -1,0 +1,19 @@
+<%- include('../partials/atas', { judul: 'Slip gaji saya' }) %>
+<div class="judul-halaman"><h1>Slip gaji saya</h1></div>
+<p class="redup">Slip tampil setelah periode gaji dikunci.</p>
+<div class="kartu tabel-bungkus">
+  <table class="tabel">
+    <thead><tr><th>Periode</th><th>Pendapatan</th><th>Potongan</th><th>Gaji bersih</th><th></th></tr></thead>
+    <tbody>
+      <% if (!daftar.length) { %><tr><td colspan="5" class="kosong">Belum ada slip gaji.</td></tr><% } %>
+      <% daftar.forEach(function (s) { %>
+        <tr>
+          <td><a href="/penggajian/slip/<%= s.id %>"><%= namaBulan[s.bulan] %> <%= s.tahun %></a></td>
+          <td><%= fmt.rupiah(s.gaji_bruto) %></td><td><%= fmt.rupiah(s.total_potongan) %></td><td><strong><%= fmt.rupiah(s.gaji_bersih) %></strong></td>
+          <td class="aksi"><a href="/penggajian/slip/<%= s.id %>/pdf" target="_blank" rel="noopener">PDF</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<%- include('../partials/bawah') %>
