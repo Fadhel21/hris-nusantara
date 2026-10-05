@@ -5,10 +5,23 @@
 %>
 <%- include('../partials/atas', { judul: k.nama }) %>
 <div class="judul-halaman">
-  <div>
-    <h1><%= k.nama %></h1>
-    <span class="redup"><%= k.nomor_induk %></span>
-    <span class="lencana <%= k.status === 'aktif' ? 'lencana-ok' : 'lencana-off' %>"><%= k.status %></span>
+  <div class="identitas">
+    <% if (k.foto_path) { %>
+      <img class="foto" src="/karyawan/<%= k.id %>/foto?v=<%= new Date(k.updated_at).getTime() %>" alt="Foto <%= k.nama %>" width="64" height="64">
+    <% } else { %>
+      <div class="foto foto-kosong" aria-hidden="true"><%= k.nama.charAt(0).toUpperCase() %></div>
+    <% } %>
+    <div>
+      <h1><%= k.nama %></h1>
+      <span class="redup"><%= k.nomor_induk %></span>
+      <span class="lencana <%= k.status === 'aktif' ? 'lencana-ok' : 'lencana-off' %>"><%= k.status %></span>
+      <% if (bolehKelola) { %>
+        <label class="tautan-aksi">Ganti foto
+          <input type="file" accept="image/*" hidden data-unggah-foto data-url="/karyawan/<%= k.id %>/foto">
+        </label>
+        <span class="redup" data-pesan-foto></span>
+      <% } %>
+    </div>
   </div>
   <% if (bolehKelola) { %><a class="tombol tombol-sekunder" href="/karyawan/<%= k.id %>/ubah">Ubah data</a><% } %>
 </div>
@@ -20,6 +33,9 @@
     <button type="button" :class="{ 'aktif': tab === 'penempatan' }" @click="tab = 'penempatan'">Penempatan</button>
     <% if (gaji) { %><button type="button" :class="{ 'aktif': tab === 'gaji' }" @click="tab = 'gaji'">Gaji</button><% } %>
     <% if (kontrak) { %><button type="button" :class="{ 'aktif': tab === 'kontrak' }" @click="tab = 'kontrak'">Kontrak</button><% } %>
+    <% if (keluarga) { %><button type="button" :class="{ 'aktif': tab === 'keluarga' }" @click="tab = 'keluarga'">Keluarga</button><% } %>
+    <% if (pendidikan) { %><button type="button" :class="{ 'aktif': tab === 'pendidikan' }" @click="tab = 'pendidikan'">Pendidikan</button><% } %>
+    <% if (dokumen) { %><button type="button" :class="{ 'aktif': tab === 'dokumen' }" @click="tab = 'dokumen'">Dokumen</button><% } %>
     <% if (bolehAkun) { %><button type="button" :class="{ 'aktif': tab === 'akun' }" @click="tab = 'akun'">Akun login</button><% } %>
     <% if (bolehKelola && k.status === 'aktif') { %><button type="button" :class="{ 'aktif': tab === 'keluar' }" @click="tab = 'keluar'">Keluar</button><% } %>
   </div>
@@ -129,6 +145,98 @@
   </section>
   <% } %>
 
+  <% if (keluarga) { %>
+  <section class="kartu" x-show="tab === 'keluarga'" x-cloak x-transition.opacity>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Nama</th><th>Hubungan</th><th>Tanggal lahir</th><th>Pekerjaan</th><th>Tanggungan</th><th>Telepon</th><% if (bolehKelola) { %><th></th><% } %></tr></thead>
+      <tbody>
+        <% if (!keluarga.length) { %><tr><td colspan="7" class="kosong">Belum ada data keluarga.</td></tr><% } %>
+        <% keluarga.forEach(function (r) { %>
+          <tr>
+            <td><%= r.nama %></td><td><%= r.hubungan %></td><td><%= f.tanggal(r.tanggal_lahir) %></td>
+            <td><%= r.pekerjaan || '' %></td><td><%= r.tanggungan ? 'Ya' : '' %></td><td><%= r.telepon || '' %></td>
+            <% if (bolehKelola) { %><td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/karyawan/<%= k.id %>/keluarga/<%= r.id %>/hapus" hx-confirm="Hapus data keluarga ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td><% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% if (bolehKelola) { %>
+    <details class="tambah"><summary>Tambah anggota keluarga</summary>
+      <form method="post" action="/karyawan/<%= k.id %>/keluarga">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Nama *<input type="text" name="nama" required></label>
+        <label>Hubungan *<select name="hubungan" required><option value="">— pilih —</option><% hubunganKeluarga.forEach(function (h) { %><option><%= h %></option><% }) %></select></label>
+        <label>Tanggal lahir<input type="date" name="tanggal_lahir"></label>
+        <label>Pekerjaan<input type="text" name="pekerjaan"></label>
+        <label>Telepon<input type="text" name="telepon"></label>
+        <label class="centang"><input type="checkbox" name="tanggungan" value="1"> Menjadi tanggungan</label>
+        <button class="tombol" type="submit">Simpan</button>
+      </form>
+    </details>
+    <% } %>
+  </section>
+  <% } %>
+
+  <% if (pendidikan) { %>
+  <section class="kartu" x-show="tab === 'pendidikan'" x-cloak x-transition.opacity>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Jenjang</th><th>Institusi</th><th>Jurusan</th><th>Masuk</th><th>Lulus</th><% if (bolehKelola) { %><th></th><% } %></tr></thead>
+      <tbody>
+        <% if (!pendidikan.length) { %><tr><td colspan="6" class="kosong">Belum ada data pendidikan.</td></tr><% } %>
+        <% pendidikan.forEach(function (r) { %>
+          <tr>
+            <td><%= r.jenjang %></td><td><%= r.institusi %></td><td><%= r.jurusan || '' %></td><td><%= r.tahun_masuk || '' %></td><td><%= r.tahun_lulus || '' %></td>
+            <% if (bolehKelola) { %><td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/karyawan/<%= k.id %>/pendidikan/<%= r.id %>/hapus" hx-confirm="Hapus data pendidikan ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td><% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% if (bolehKelola) { %>
+    <details class="tambah"><summary>Tambah riwayat pendidikan</summary>
+      <form method="post" action="/karyawan/<%= k.id %>/pendidikan">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Jenjang *<select name="jenjang" required><option value="">— pilih —</option><% jenjangPendidikan.forEach(function (j) { %><option><%= j %></option><% }) %></select></label>
+        <label>Institusi *<input type="text" name="institusi" required></label>
+        <label>Jurusan<input type="text" name="jurusan"></label>
+        <label>Tahun masuk<input type="number" name="tahun_masuk" min="1950" step="1"></label>
+        <label>Tahun lulus<input type="number" name="tahun_lulus" min="1950" step="1"></label>
+        <button class="tombol" type="submit">Simpan</button>
+      </form>
+    </details>
+    <% } %>
+  </section>
+  <% } %>
+
+  <% if (dokumen) { %>
+  <section class="kartu" x-show="tab === 'dokumen'" x-cloak x-transition.opacity>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Jenis</th><th>Nama berkas</th><th>Ukuran</th><th>Diunggah</th><th></th></tr></thead>
+      <tbody>
+        <% if (!dokumen.length) { %><tr><td colspan="5" class="kosong">Belum ada dokumen.</td></tr><% } %>
+        <% dokumen.forEach(function (d) { %>
+          <tr>
+            <td><%= d.jenis %></td>
+            <td><a href="/karyawan/<%= k.id %>/dokumen/<%= d.id %>" target="_blank" rel="noopener"><%= d.nama_asli %></a></td>
+            <td><%= Math.ceil(d.ukuran / 1024) %> KB</td>
+            <td><%= f.tanggal(new Date(d.created_at).toISOString().slice(0, 10)) %></td>
+            <td class="aksi"><% if (bolehKelola) { %><button type="button" class="tautan-bahaya" hx-post="/karyawan/<%= k.id %>/dokumen/<%= d.id %>/hapus" hx-confirm="Hapus dokumen ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button><% } %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% if (bolehKelola) { %>
+    <details class="tambah"><summary>Unggah dokumen</summary>
+      <form data-unggah-dokumen data-url="/karyawan/<%= k.id %>/dokumen">
+        <label>Jenis *<select name="jenis" required><option value="">— pilih —</option><% jenisDokumen.forEach(function (j) { %><option><%= j %></option><% }) %></select></label>
+        <label>Berkas * (PDF, JPG, atau PNG, maks. 2 MB)<input type="file" name="berkas" accept="application/pdf,image/jpeg,image/png" required></label>
+        <p class="galat" data-pesan-dokumen hidden role="alert"></p>
+        <button class="tombol" type="submit">Unggah</button>
+      </form>
+    </details>
+    <% } %>
+  </section>
+  <% } %>
+
   <% if (bolehAkun) { %>
   <section class="kartu" x-show="tab === 'akun'" x-cloak x-transition.opacity>
     <% if (akun) { %>
@@ -165,4 +273,5 @@
   </section>
   <% } %>
 </div>
+<script src="/js/unggah.js" defer></script>
 <%- include('../partials/bawah') %>

@@ -1,5 +1,7 @@
 const svc = require('../services/karyawan');
 const riwayat = require('../services/riwayat');
+const profil = require('../services/profil');
+const validasi = require('../services/validasi');
 const akses = require('../services/akses');
 const { GalatBisnis } = require('../../../config/galat');
 
@@ -21,6 +23,7 @@ async function tampilDetail(req, res, next, { galat = null, status = 200 } = {})
     const data = await svc.detail(req.pengguna, req.params.id);
     res.status(status).render('karyawan/detail', {
       ...data, galat, opsi: data.bolehKelola ? await svc.opsi() : null, peranAkun: svc.PERAN_AKUN, isian: req.body || {},
+      hubunganKeluarga: validasi.HUBUNGAN, jenjangPendidikan: validasi.JENJANG, jenisDokumen: validasi.JENIS_DOKUMEN,
     });
   } catch (err) { next(err); }
 }
@@ -80,6 +83,8 @@ function aksiDetail(fungsi) {
 const tambahPenempatan = aksiDetail((req) => riwayat.tambahPenempatan(req.pengguna, req.params.id, req.body));
 const tambahGaji = aksiDetail((req) => riwayat.tambahGaji(req.pengguna, req.params.id, req.body));
 const tambahKontrak = aksiDetail((req) => riwayat.tambahKontrak(req.pengguna, req.params.id, req.body));
+const tambahKeluarga = aksiDetail((req) => profil.tambah(req.pengguna, req.params.id, 'keluarga', req.body));
+const tambahPendidikan = aksiDetail((req) => profil.tambah(req.pengguna, req.params.id, 'pendidikan', req.body));
 const keluarkan = aksiDetail((req) => svc.keluarkan(req.pengguna, req.params.id, req.body));
 const buatAkun = aksiDetail((req) => svc.buatAkun(req.pengguna, req.params.id, req.body));
 
@@ -93,5 +98,5 @@ async function hapusRiwayat(req, res, next) {
 
 module.exports = {
   daftar, saya, detail, formBaru, simpanBaru, formUbah, simpanUbah,
-  tambahPenempatan, tambahGaji, tambahKontrak, keluarkan, buatAkun, hapusRiwayat,
+  tambahPenempatan, tambahGaji, tambahKontrak, tambahKeluarga, tambahPendidikan, keluarkan, buatAkun, hapusRiwayat,
 };

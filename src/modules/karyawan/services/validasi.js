@@ -32,6 +32,9 @@ function proses(spesifikasi, input) {
       case 'id':
         if (!/^\d{1,18}$/.test(v)) { salah('tidak valid.'); continue; }
         break;
+      case 'tahun':
+        if (!/^\d{4}$/.test(v) || Number(v) < 1950 || Number(v) > new Date().getFullYear() + 10) { salah('tidak valid.'); continue; }
+        break;
       case 'pilihan':
         if (!s.pilihan.includes(v)) { salah('tidak valid.'); continue; }
         break;
@@ -85,6 +88,41 @@ const KELUAR = [
   { nama: 'alasan_keluar', label: 'Alasan keluar', wajib: true, maks: 500 },
 ];
 
+const HUBUNGAN = ['pasangan', 'anak', 'ayah', 'ibu', 'saudara', 'lainnya'];
+const JENJANG = ['SD', 'SMP', 'SMA/SMK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3'];
+const JENIS_DOKUMEN = ['ktp', 'kk', 'npwp', 'ijazah', 'kontrak', 'lainnya'];
+
+const KELUARGA = [
+  { nama: 'nama', label: 'Nama', wajib: true },
+  { nama: 'hubungan', label: 'Hubungan', wajib: true, jenis: 'pilihan', pilihan: HUBUNGAN },
+  { nama: 'tanggal_lahir', label: 'Tanggal lahir', jenis: 'tanggal', tidakMasaDepan: true },
+  { nama: 'pekerjaan', label: 'Pekerjaan', maks: 100 },
+  { nama: 'telepon', label: 'Telepon', pola: /^[0-9+\-\s()]{5,20}$/, pesanPola: 'tidak valid.' },
+];
+
+const PENDIDIKAN = [
+  { nama: 'jenjang', label: 'Jenjang', wajib: true, jenis: 'pilihan', pilihan: JENJANG },
+  { nama: 'institusi', label: 'Institusi', wajib: true },
+  { nama: 'jurusan', label: 'Jurusan', maks: 100 },
+  { nama: 'tahun_masuk', label: 'Tahun masuk', jenis: 'tahun' },
+  { nama: 'tahun_lulus', label: 'Tahun lulus', jenis: 'tahun' },
+];
+
+function keluarga(input) {
+  const hasil = proses(KELUARGA, input);
+  hasil.nilai.tanggungan = input.tanggungan === '1' || input.tanggungan === 'on';
+  return hasil;
+}
+
+function pendidikan(input) {
+  const hasil = proses(PENDIDIKAN, input);
+  const { tahun_masuk: masuk, tahun_lulus: lulus } = hasil.nilai;
+  if (masuk && lulus && Number(lulus) < Number(masuk)) hasil.galat.push('Tahun lulus tidak boleh sebelum tahun masuk.');
+  if (masuk) hasil.nilai.tahun_masuk = Number(masuk);
+  if (lulus) hasil.nilai.tahun_lulus = Number(lulus);
+  return hasil;
+}
+
 function dataPribadi(input) { return proses(DATA_PRIBADI, input); }
 function penempatan(input) { return proses(PENEMPATAN, input); }
 function gaji(input) { return proses(GAJI, input); }
@@ -115,4 +153,7 @@ function karyawanBaru(input) {
   };
 }
 
-module.exports = { dataPribadi, penempatan, gaji, kontrak, keluar, karyawanBaru, JENIS_KONTRAK };
+module.exports = {
+  dataPribadi, penempatan, gaji, kontrak, keluar, karyawanBaru, keluarga, pendidikan,
+  JENIS_KONTRAK, HUBUNGAN, JENJANG, JENIS_DOKUMEN,
+};

@@ -6,6 +6,8 @@ const auth = require('../../pengguna/services/auth');
 const akses = require('./akses');
 const validasi = require('./validasi');
 const riwayat = require('./riwayat');
+const profil = require('./profil');
+const dokumen = require('./dokumen');
 const { samarkan, formatNomorInduk } = require('./format');
 
 const PER_HALAMAN = 25;
@@ -71,6 +73,10 @@ async function detail(pengguna, id) {
     penempatan: await riwayat.daftarPenempatan(id),
     gaji: pengelola ? await riwayat.daftarGaji(id) : null,
     kontrak: pengelola || diriSendiri ? await riwayat.daftarKontrak(id) : null,
+    // Keluarga, pendidikan, dan dokumen: hanya admin/HR dan pemilik datanya (atasan tidak).
+    keluarga: sensitif ? await profil.daftar('keluarga', id) : null,
+    pendidikan: sensitif ? await profil.daftar('pendidikan', id) : null,
+    dokumen: sensitif ? await dokumen.daftar(id) : null,
     akun: null,
   };
   if (hasil.bolehAkun) {
