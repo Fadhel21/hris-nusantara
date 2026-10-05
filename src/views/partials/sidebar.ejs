@@ -1,0 +1,8 @@
+<aside class="sidebar" :class="{ 'terbuka': menuBuka }" @click.outside="menuBuka = false">
+  <div class="merek">HRIS</div>
+  <nav>
+    <% menu.forEach(function (m) { %>
+      <a href="<%= m.href %>" class="<%= halaman === m.href ? 'aktif' : '' %>"><%= m.label %></a>
+    <% }) %>
+  </nav>
+</aside>

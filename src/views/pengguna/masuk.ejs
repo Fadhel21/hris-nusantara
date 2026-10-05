@@ -1,0 +1,16 @@
+<%- include('../partials/atas', { judul: 'Masuk' }) %>
+<section class="kartu kartu-masuk">
+  <h1>Masuk ke HRIS</h1>
+  <% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+  <form method="post" action="/masuk">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Username
+      <input type="text" name="username" value="<%= username %>" autocomplete="username" required autofocus>
+    </label>
+    <label>Password
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <button class="tombol" type="submit">Masuk</button>
+  </form>
+</section>
+<%- include('../partials/bawah') %>
