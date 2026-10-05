@@ -1,8 +1,10 @@
 <aside class="sidebar" :class="{ 'terbuka': menuBuka }" @click.outside="menuBuka = false">
   <div class="merek">HRIS</div>
   <nav>
-    <% menu.forEach(function (m) { %>
-      <a href="<%= m.href %>" class="<%= halaman === m.href ? 'aktif' : '' %>"><%= m.label %></a>
+    <% var grupSebelum = null; menu.forEach(function (m) { %>
+      <% if (m.grup && m.grup !== grupSebelum) { %><div class="grup-menu"><%= m.grup %></div><% } %>
+      <% grupSebelum = m.grup || null; %>
+      <a href="<%= m.href %>" class="<%= halaman === m.href || (m.href !== '/' && halaman.indexOf(m.href + '/') === 0) ? 'aktif' : '' %>"><%= m.label %></a>
     <% }) %>
   </nav>
 </aside>

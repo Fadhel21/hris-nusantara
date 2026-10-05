@@ -31,3 +31,26 @@ input:focus-visible, .tombol:focus-visible { outline:2px solid var(--utama); out
   .sidebar.terbuka { transform:none; }
   .nama-pengguna { display:none; }
 }
+.judul-halaman { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+.judul-halaman h1 { margin:0; }
+.grup-menu { font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:#7f8da0; padding:.9rem 1.25rem .3rem; }
+.tabel-bungkus { padding:0; overflow-x:auto; }
+.tabel { width:100%; border-collapse:collapse; }
+.tabel th, .tabel td { text-align:left; padding:.65rem 1rem; border-bottom:1px solid var(--garis); }
+.tabel th { font-size:.8rem; color:var(--redup); font-weight:600; }
+.tabel tr:last-child td { border-bottom:0; }
+.tabel .aksi { text-align:right; white-space:nowrap; }
+.tabel .kosong { text-align:center; color:var(--redup); }
+.tautan-bahaya { background:none; border:0; color:var(--galat); cursor:pointer; font:inherit; margin-left:.75rem; padding:0; }
+tr.htmx-swapping { opacity:0; transition:opacity .2s; }
+.form-lebar { max-width:560px; }
+textarea, select, input[type=number] { display:block; width:100%; margin-top:.3rem; padding:.55rem .7rem; border:1px solid var(--garis); border-radius:6px; font:inherit; background:#fff; }
+.baris-tombol { display:flex; gap:.5rem; }
+.tombol { text-decoration:none; display:inline-block; }
+.blok { margin-bottom:1rem; }
+.blok h2 { margin:0 0 .5rem; font-size:1.15rem; }
+.blok h3 { margin:1rem 0 .3rem; font-size:.85rem; color:var(--redup); text-transform:uppercase; letter-spacing:.04em; }
+.redup { color:var(--redup); font-size:.9rem; }
+.daftar-polos { list-style:none; margin:0; padding:0; }
+.pohon { margin:.3rem 0 0; padding-left:1.2rem; }
+.pohon li { margin:.4rem 0; }

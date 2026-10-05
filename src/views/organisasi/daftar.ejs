@@ -1,0 +1,35 @@
+<%- include('../partials/atas', { judul: def.judul }) %>
+<div class="judul-halaman">
+  <h1><%= def.judul %></h1>
+  <a class="tombol" href="/organisasi/<%= kunci %>/baru">Tambah</a>
+</div>
+<div class="kartu tabel-bungkus">
+  <table class="tabel">
+    <thead>
+      <tr>
+        <% def.kolom.forEach(function (k) { var f = def.fields.find(function (x) { return x.nama === k; }); %>
+          <th><%= f.label %></th>
+        <% }) %>
+        <th class="aksi"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (!baris.length) { %>
+        <tr><td colspan="<%= def.kolom.length + 1 %>" class="kosong">Belum ada data.</td></tr>
+      <% } %>
+      <% baris.forEach(function (b) { %>
+        <tr>
+          <% def.kolom.forEach(function (k) { %><td><%= b.tampil[k] %></td><% }) %>
+          <td class="aksi">
+            <a href="/organisasi/<%= kunci %>/<%= b.id %>/ubah">Ubah</a>
+            <button type="button" class="tautan-bahaya"
+                    hx-post="/organisasi/<%= kunci %>/<%= b.id %>/hapus"
+                    hx-confirm="Hapus <%= def.judul.toLowerCase() %> ini?"
+                    hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<%- include('../partials/bawah') %>

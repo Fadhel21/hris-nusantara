@@ -1,0 +1,9 @@
+<li>
+  <strong><%= d.kode %></strong> <%= d.nama %>
+  <% if (d.jabatan.length) { %>
+    <div class="redup">Jabatan: <%= d.jabatan.map(function (j) { return j.nama; }).join(', ') %></div>
+  <% } %>
+  <% if (d.anak.length) { %>
+    <ul class="pohon"><% d.anak.forEach(function (a) { %><%- include('struktur_node', { d: a }) %><% }) %></ul>
+  <% } %>
+</li>

@@ -40,3 +40,9 @@ test('http: halaman tidak ada memberi 404', async () => {
   const r = await fetch(`${base}/tidak-ada`);
   assert.strictEqual(r.status, 404);
 });
+
+test('http: rute organisasi tanpa login diarahkan ke /masuk', async () => {
+  const r = await fetch(`${base}/organisasi/cabang`, { redirect: 'manual' });
+  assert.strictEqual(r.status, 302);
+  assert.strictEqual(r.headers.get('location'), '/masuk');
+});

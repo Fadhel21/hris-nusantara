@@ -1,0 +1,29 @@
+<%- include('../partials/atas', { judul: (id ? 'Ubah ' : 'Tambah ') + def.judul }) %>
+<div class="judul-halaman"><h1><%= id ? 'Ubah' : 'Tambah' %> <%= def.judul.toLowerCase() %></h1></div>
+<section class="kartu form-lebar">
+  <% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+  <form method="post" action="/organisasi/<%= kunci %><%= id ? '/' + id : '' %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <% def.fields.forEach(function (f) { var v = nilai[f.nama] === undefined || nilai[f.nama] === null ? '' : String(nilai[f.nama]); %>
+      <label><%= f.label %><%= f.wajib ? ' *' : '' %>
+        <% if (f.tipe === 'textarea') { %>
+          <textarea name="<%= f.nama %>" rows="3"><%= v %></textarea>
+        <% } else if (f.tipe === 'select') { %>
+          <select name="<%= f.nama %>" <%= f.wajib ? 'required' : '' %>>
+            <option value="">— pilih —</option>
+            <% (opsi[f.nama] || []).forEach(function (o) { %>
+              <option value="<%= o.id %>" <%= String(o.id) === v ? 'selected' : '' %>><%= o.label %></option>
+            <% }) %>
+          </select>
+        <% } else { %>
+          <input type="<%= f.tipe === 'number' ? 'number' : 'text' %>" name="<%= f.nama %>" value="<%= v %>" <%= f.tipe === 'number' ? 'min=0 step=1' : '' %> <%= f.wajib ? 'required' : '' %>>
+        <% } %>
+      </label>
+    <% }) %>
+    <div class="baris-tombol">
+      <button class="tombol" type="submit">Simpan</button>
+      <a class="tombol tombol-sekunder" href="/organisasi/<%= kunci %>">Batal</a>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

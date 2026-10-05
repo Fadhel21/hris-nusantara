@@ -38,6 +38,7 @@ function buatApp() {
   });
 
   app.use(require('./modules/pengguna/routes'));
+  app.use(require('./modules/organisasi/routes'));
   app.get('/', wajibMasuk, (req, res) => res.render('beranda/index'));
 
   app.use(tidakDitemukan);

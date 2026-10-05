@@ -1,0 +1,21 @@
+<%- include('../partials/atas', { judul: 'Struktur organisasi' }) %>
+<div class="judul-halaman"><h1>Struktur organisasi</h1></div>
+<% if (!perusahaan.length) { %>
+  <div class="kartu"><p>Belum ada perusahaan. <a href="/organisasi/perusahaan/baru">Tambah perusahaan</a>.</p></div>
+<% } %>
+<% perusahaan.forEach(function (p) { %>
+  <section class="kartu blok">
+    <h2><%= p.nama %></h2>
+    <h3>Cabang</h3>
+    <% if (!p.cabang.length) { %><p class="redup">Belum ada cabang.</p><% } else { %>
+      <ul class="daftar-polos">
+        <% p.cabang.forEach(function (c) { %><li><strong><%= c.kode %></strong> <%= c.nama %> <span class="redup">· <%= c.zona_waktu %></span></li><% }) %>
+      </ul>
+    <% } %>
+    <h3>Departemen</h3>
+    <% if (!p.departemen.length) { %><p class="redup">Belum ada departemen.</p><% } else { %>
+      <ul class="pohon"><% p.departemen.forEach(function (d) { %><%- include('struktur_node', { d: d }) %><% }) %></ul>
+    <% } %>
+  </section>
+<% }) %>
+<%- include('../partials/bawah') %>
