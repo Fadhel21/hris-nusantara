@@ -1,4 +1,30 @@
 <%- include('../partials/atas', { judul: 'Beranda' }) %>
-<h1>Selamat datang, <%= pengguna.username %></h1>
-<p>Modul akan muncul di menu samping seiring pengembangan.</p>
+<section class="sapaan">
+  <h1><%= sapaan %>, <%= nama %></h1>
+  <p><%= peran %> · <%= fmt.hari(tanggal) %>, <%= fmt.tanggal(tanggal) %></p>
+</section>
+
+<% if (kartu.length) { %>
+<section class="statistik" aria-label="Ringkasan">
+  <% kartu.forEach(function (k) { %>
+    <a class="kartu-stat <%= k.nada ? 'nada-' + k.nada : '' %>" href="<%= k.href %>">
+      <span class="stat-ikon"><%- ikon(k.ikon, 22) %></span>
+      <span class="stat-label"><%= k.label %></span>
+      <span class="stat-nilai"><%= k.nilai %></span>
+      <span class="stat-ket"><%= k.ket %></span>
+    </a>
+  <% }) %>
+</section>
+<% } %>
+
+<% if (pintasan.length) { %>
+<section>
+  <h2 class="judul-bagian">Pintasan</h2>
+  <ul class="pintasan">
+    <% pintasan.forEach(function (p) { %>
+      <li><a href="<%= p.href %>"><span class="nav-ikon"><%- ikon(p.ikon, 22) %></span><span><%= p.label %></span><span class="panah"><%- ikon('panah', 18) %></span></a></li>
+    <% }) %>
+  </ul>
+</section>
+<% } %>
 <%- include('../partials/bawah') %>

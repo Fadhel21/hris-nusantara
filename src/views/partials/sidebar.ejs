@@ -5,14 +5,49 @@
     var cocok = halaman === m.href || (m.href !== '/' && halaman.indexOf(m.href + '/') === 0);
     if (cocok && m.href.length > aktifHref.length) aktifHref = m.href;
   });
+  var utama = menu.filter(function (m) { return !m.grup; });
+  var namaGrup = []; var perGrup = {};
+  menu.forEach(function (m) {
+    if (!m.grup) return;
+    if (!perGrup[m.grup]) { perGrup[m.grup] = []; namaGrup.push(m.grup); }
+    perGrup[m.grup].push(m);
+  });
 %>
-<aside class="sidebar" :class="{ 'terbuka': menuBuka }" @click.outside="menuBuka = false">
-  <div class="merek">HRIS</div>
-  <nav>
-    <% var grupSebelum = null; menu.forEach(function (m) { %>
-      <% if (m.grup && m.grup !== grupSebelum) { %><div class="grup-menu"><%= m.grup %></div><% } %>
-      <% grupSebelum = m.grup || null; %>
-      <a href="<%= m.href %>" class="<%= m.href === aktifHref ? 'aktif' : '' %>"><%= m.label %></a>
+<aside id="sidebar" class="sidebar" :class="{ 'terbuka': menuBuka }" aria-label="Menu utama">
+  <div class="sidebar-kepala">
+    <a class="sidebar-merek" href="/" aria-label="HRIS, ke beranda">
+      <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="9" fill="#1f6feb"/><path d="M10 9v14M22 9v14M10 16h12" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
+      <span class="sidebar-merek-teks"><strong>HRIS</strong><small>Manajemen SDM</small></span>
+    </a>
+    <button class="sidebar-tutup" type="button" @click="menuBuka = false" aria-label="Tutup menu navigasi"><%- ikon('tutup', 20) %></button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <% utama.forEach(function (m) { %>
+      <a class="nav-tautan nav-utama <%= m.href === aktifHref ? 'aktif' : '' %>" href="<%= m.href %>" <%- m.href === aktifHref ? 'aria-current="page"' : '' %>>
+        <span class="nav-ikon"><%- ikon('beranda') %></span><span><%= m.label %></span>
+      </a>
+    <% }) %>
+
+    <% namaGrup.forEach(function (g) {
+         var slug = g.toLowerCase();
+         var aktifGrup = perGrup[g].some(function (m) { return m.href === aktifHref; }); %>
+      <div class="nav-grup" x-data="grupMenu('<%= g %>', <%= aktifGrup ? 'true' : 'false' %>)">
+        <button type="button" class="nav-grup-judul <%= aktifGrup ? 'berisi-aktif' : '' %>" @click="alih()" :aria-expanded="buka.toString()" aria-controls="grup-<%= slug %>">
+          <span class="nav-ikon"><%- ikon(ikonGrup[g] || 'dokumen') %></span>
+          <span class="nav-grup-nama"><%= g %></span>
+          <span class="nav-chevron" :class="{ 'putar': buka }"><%- ikon('chevron', 16) %></span>
+        </button>
+        <ul id="grup-<%= slug %>" class="nav-sub <%= aktifGrup ? '' : 'tertutup' %>" :class="{ 'tertutup': !buka }">
+          <% perGrup[g].forEach(function (m) { %>
+            <li><a class="nav-tautan nav-tautan-sub <%= m.href === aktifHref ? 'aktif' : '' %>" href="<%= m.href %>" <%- m.href === aktifHref ? 'aria-current="page"' : '' %>><%= m.label %></a></li>
+          <% }) %>
+        </ul>
+      </div>
     <% }) %>
   </nav>
+
+  <div class="sidebar-kaki">
+    <span>HRIS lokal</span>
+  </div>
 </aside>

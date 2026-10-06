@@ -76,7 +76,8 @@
   --warna-garis: var(--abu-200);
   --warna-utama: var(--biru-600);
   --warna-utama-hover: var(--biru-700);
-  --warna-utama-lembut: var(--biru-100);
+  --warna-utama-lembut: var(--biru-50);
+  --warna-utama-di-lembut: var(--biru-700);   /* teks/ikon di atas latar biru lembut */
   --warna-di-atas-utama: var(--abu-0);
   --warna-bahaya: var(--merah-600);
   --warna-bahaya-lembut: var(--merah-50);
@@ -102,4 +103,38 @@
 :focus-visible {
   outline: 3px solid var(--warna-fokus);
   outline-offset: 2px;
+}
+
+/* ---------- Tambahan untuk kerangka aplikasi ---------- */
+:root {
+  /* Skala tipografi */
+  --teks-xs: .75rem;
+  --teks-s: .8125rem;
+  --teks-m: .9375rem;
+  --teks-l: 1.125rem;
+  --teks-xl: 1.5rem;
+  --teks-2xl: 1.875rem;
+
+  /* Status (semantik) */
+  --info-bg: #eaf2ff;
+  --info-garis: #c6dafc;
+  --info-teks: #173f8a;
+  --peringatan-bg: var(--kuning-50);
+  --peringatan-garis: #f1deaa;
+  --peringatan-teks: var(--kuning-800);
+  --sukses-bg: var(--hijau-50);
+  --sukses-teks: var(--hijau-700);
+  --bahaya-garis: #f3c1bb;
+  --bahaya-teks: var(--merah-800);
+
+  /* Kerangka */
+  --sidebar-lebar: 17rem;
+  --bilah-tinggi: 4rem;
+  --sidebar-bg: linear-gradient(185deg, var(--navy-800), var(--navy-950) 70%);
+  --sidebar-teks: #b9c5de;          /* kontras 9:1 di atas navy */
+  --sidebar-teks-aktif: #ffffff;
+  --sidebar-hover: rgba(255, 255, 255, .06);
+  --sidebar-aktif: rgba(61, 134, 245, .22);
+  --sidebar-garis: rgba(255, 255, 255, .09);
+  --konten-maks: 88rem;
 }

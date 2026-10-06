@@ -103,7 +103,7 @@
 }
 .tombol-demo:hover { border-color: var(--warna-utama); background: var(--warna-utama-lembut); transform: translateY(-1px); }
 .tombol-demo:active { transform: scale(.98); }
-.ikon-demo { flex: none; display: grid; place-items: center; width: 32px; height: 32px; color: var(--warna-utama); background: var(--warna-utama-lembut); border-radius: var(--radius-s); }
+.ikon-demo { flex: none; display: grid; place-items: center; width: 32px; height: 32px; color: var(--warna-utama-di-lembut); background: var(--warna-utama-lembut); border-radius: var(--radius-s); }
 .tombol-demo:hover .ikon-demo { background: var(--warna-permukaan); }
 .ikon-demo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .teks-demo { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }

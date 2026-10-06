@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1530">
   <meta name="csrf-token" content="<%= csrfToken %>">
   <title><%= typeof judul !== 'undefined' ? judul + ' · HRIS' : 'HRIS' %></title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%231f6feb'/%3E%3Cpath d='M10 9v14M22 9v14M10 16h12' stroke='white' stroke-width='3' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
@@ -14,21 +15,44 @@
 </head>
 <body>
 <% if (pengguna) { %>
-<div class="kerangka" x-data="{ menuBuka: false }">
+<%
+  var labelPeran = { admin: 'Administrator', hr: 'HR', atasan: 'Atasan', karyawan: 'Karyawan' };
+%>
+<a class="lewati" href="#konten">Lewati ke konten</a>
+<div class="kerangka" x-data="{ menuBuka: false }" @keydown.escape.window="menuBuka = false">
   <%- include('sidebar') %>
+  <div class="tirai" x-show="menuBuka" x-cloak x-transition.opacity @click="menuBuka = false"></div>
   <div class="isi">
     <header class="bilah">
-      <button class="tombol-menu" type="button" @click="menuBuka = !menuBuka" aria-label="Buka menu">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <button class="tombol-menu" type="button" @click="menuBuka = !menuBuka" :aria-expanded="menuBuka.toString()" aria-controls="sidebar" aria-label="Buka menu navigasi">
+        <%- ikon('menu', 22) %>
       </button>
+      <p class="bilah-judul"><%= typeof judul !== 'undefined' ? judul : 'HRIS' %></p>
       <span class="spasi"></span>
-      <span class="nama-pengguna"><%= pengguna.username %> · <%= pengguna.peran %></span>
-      <form method="post" action="/keluar">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button class="tombol tombol-sekunder" type="submit">Keluar</button>
-      </form>
+
+      <div class="menu-pengguna" x-data="{ buka: false }" @click.outside="buka = false" @keydown.escape="buka = false">
+        <button type="button" class="pengguna-tombol" @click="buka = !buka" :aria-expanded="buka.toString()" aria-haspopup="menu" aria-label="Menu akun <%= pengguna.username %>">
+          <span class="avatar" aria-hidden="true"><%= pengguna.username.charAt(0).toUpperCase() %></span>
+          <span class="pengguna-info"><strong><%= pengguna.username %></strong><small><%= labelPeran[pengguna.peran] || pengguna.peran %></small></span>
+          <span class="pengguna-chevron" :class="{ 'putar': buka }"><%- ikon('chevron', 16) %></span>
+        </button>
+        <div class="pengguna-panel" x-show="buka" x-cloak x-transition.opacity.duration.150ms role="menu">
+          <div class="pengguna-kepala">
+            <strong><%= pengguna.username %></strong>
+            <span><%= labelPeran[pengguna.peran] || pengguna.peran %></span>
+          </div>
+          <% if (pengguna.karyawanId) { %>
+            <a role="menuitem" href="/karyawan/saya"><%- ikon('profil', 18) %> Profil saya</a>
+            <a role="menuitem" href="/slip-saya"><%- ikon('penggajian', 18) %> Slip gaji saya</a>
+          <% } %>
+          <form method="post" action="/keluar">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" role="menuitem" class="keluar"><%- ikon('keluar', 18) %> Keluar</button>
+          </form>
+        </div>
+      </div>
     </header>
-    <main class="konten">
+    <main class="konten" id="konten" tabindex="-1">
 <% } else { %>
 <main class="tamu">
 <% } %>

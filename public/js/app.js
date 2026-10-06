@@ -1,3 +1,18 @@
+// Kelompok menu di sidebar: terbuka bila berisi halaman aktif, atau bila terakhir dibuka pengguna.
+document.addEventListener('alpine:init', function () {
+  Alpine.data('grupMenu', function (nama, aktifAwal) {
+    var kunci = 'hris.menu.' + nama;
+    function baca() { try { return localStorage.getItem(kunci) === '1'; } catch (e) { return false; } }
+    return {
+      buka: aktifAwal || baca(),
+      alih: function () {
+        this.buka = !this.buka;
+        try { localStorage.setItem(kunci, this.buka ? '1' : '0'); } catch (e) { /* penyimpanan dinonaktifkan */ }
+      }
+    };
+  });
+});
+
 // Menyertakan token CSRF pada setiap permintaan HTMX.
 document.addEventListener('htmx:configRequest', function (e) {
   var meta = document.querySelector('meta[name="csrf-token"]');
