@@ -1,4 +1,5 @@
-:root { --bg:#f4f6f8; --kartu:#fff; --teks:#1c2430; --redup:#5c6877; --garis:#dde3ea; --utama:#1f6feb; --utama-gelap:#1858bd; --galat:#b42318; --sidebar:#17202b; }
+/* Variabel lama dipetakan ke token (lihat token.css) agar seluruh halaman memakai satu sumber nilai. */
+:root { --bg:var(--warna-latar); --kartu:var(--warna-permukaan); --teks:var(--warna-teks); --redup:var(--warna-teks-redup); --garis:var(--warna-garis); --utama:var(--warna-utama); --utama-gelap:var(--warna-utama-hover); --galat:var(--warna-bahaya); --sidebar:var(--warna-sidebar); }
 * { box-sizing: border-box; }
 body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--teks); }
 a { color:var(--utama); }

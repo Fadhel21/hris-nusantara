@@ -1,16 +1,135 @@
-<%- include('../partials/atas', { judul: 'Masuk' }) %>
-<section class="kartu kartu-masuk">
-  <h1>Masuk ke HRIS</h1>
-  <% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
-  <form method="post" action="/masuk">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <label>Username
-      <input type="text" name="username" value="<%= username %>" autocomplete="username" required autofocus>
-    </label>
-    <label>Password
-      <input type="password" name="password" autocomplete="current-password" required>
-    </label>
-    <button class="tombol" type="submit">Masuk</button>
-  </form>
-</section>
-<%- include('../partials/bawah') %>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1530">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Masuk · HRIS</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%231f6feb'/%3E%3Cpath d='M10 9v14M22 9v14M10 16h12' stroke='white' stroke-width='3' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/token.css">
+  <link rel="stylesheet" href="/css/masuk.css">
+  <script src="/js/masuk.js" defer></script>
+  <script src="/js/alpine.min.js" defer></script>
+</head>
+<body class="masuk-halaman">
+<a class="lewati" href="#form-masuk">Lewati ke formulir masuk</a>
+
+<main class="masuk" x-data="masuk()">
+
+  <%# 1) Formulir masuk %>
+  <section class="masuk-form" aria-labelledby="judul-masuk">
+    <div class="merek muncul" style="--i:0">
+      <svg viewBox="0 0 32 32" width="36" height="36" aria-hidden="true" focusable="false">
+        <rect width="32" height="32" rx="9" fill="currentColor"/>
+        <path d="M10 9v14M22 9v14M10 16h12" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span class="merek-nama">HRIS</span>
+    </div>
+
+    <h1 id="judul-masuk" class="muncul" style="--i:1">Masuk ke HRIS</h1>
+    <p class="pengantar muncul" style="--i:2">Kelola absensi, cuti, dan penggajian dalam satu tempat.</p>
+
+    <% if (galat) { %>
+      <div class="galat-masuk muncul" style="--i:2" role="alert" id="galat-masuk">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 16.5v.01"/></svg>
+        <span><%= galat %></span>
+      </div>
+    <% } %>
+
+    <form id="form-masuk" method="post" action="/masuk" novalidate @submit="memuat = true" aria-describedby="<%= galat ? 'galat-masuk' : '' %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="bidang muncul" style="--i:3">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" value="<%= username %>" autocomplete="username"
+               autocapitalize="none" spellcheck="false" required <%- galat ? 'aria-invalid="true"' : '' %>
+               x-ref="username" x-model="username" autofocus>
+      </div>
+
+      <div class="bidang muncul" style="--i:4">
+        <label for="password">Password</label>
+        <div class="kolom-sandi">
+          <input id="password" name="password" :type="tampil ? 'text' : 'password'" autocomplete="current-password"
+                 required <%- galat ? 'aria-invalid="true"' : '' %> x-model="password" x-ref="password"
+                 @keyup="capslock = $event.getModifierState && $event.getModifierState('CapsLock')"
+                 @keydown="capslock = $event.getModifierState && $event.getModifierState('CapsLock')">
+          <button type="button" class="tombol-mata" @click="tampil = !tampil"
+                  :aria-pressed="tampil.toString()" :aria-label="tampil ? 'Sembunyikan password' : 'Tampilkan password'">
+            <svg x-show="!tampil" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg x-show="tampil" x-cloak viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.2-.9M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+          </button>
+        </div>
+        <p class="peringatan" x-show="capslock" x-cloak x-transition.opacity role="status">Caps Lock sedang aktif.</p>
+      </div>
+
+      <button class="tombol-masuk muncul" style="--i:5" type="submit" x-ref="kirim" :disabled="memuat" :aria-busy="memuat.toString()">
+        <span class="putar" aria-hidden="true"></span>
+        <span x-text="memuat ? 'Memproses…' : 'Masuk'">Masuk</span>
+      </button>
+      <p class="bantuan muncul" style="--i:6">Lupa password? Hubungi administrator atau HR.</p>
+    </form>
+  </section>
+
+  <%# 2) Ikon 3D (dekoratif) %>
+  <section class="masuk-visual" aria-hidden="true">
+    <div class="panggung">
+      <div class="adegan">
+        <div class="miring">
+          <div class="kubus">
+            <div class="sisi s-depan"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="sisi s-kanan"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+            <div class="sisi s-belakang"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+            <div class="sisi s-kiri"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+            <div class="sisi s-atas"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="sisi s-bawah"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-3"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="bayangan-lantai"></div>
+    </div>
+    <div class="teks-visual muncul" style="--i:4">
+      <p class="slogan">Satu tempat untuk seluruh urusan SDM.</p>
+      <ul class="lencana-fitur">
+        <li>Absensi</li><li>Cuti &amp; izin</li><li>Penggajian</li><li>Slip gaji</li>
+      </ul>
+    </div>
+  </section>
+
+  <%# 3) Akun demo (di kanan ikon 3D) %>
+  <% if (akunDemo.length) { %>
+  <aside class="masuk-demo" aria-labelledby="judul-demo">
+    <div class="muncul" style="--i:3">
+      <h2 id="judul-demo">Akun demo</h2>
+      <p class="demo-ket">Pilih peran lalu tekan <strong>Pakai akun ini</strong> untuk mengisi formulir.</p>
+    </div>
+    <ul class="daftar-demo">
+      <% akunDemo.forEach(function (a, i) { %>
+      <li class="kartu-demo muncul" style="--i:<%= 4 + i %>">
+        <span class="ikon-demo" aria-hidden="true">
+          <% if (a.peran === 'admin') { %><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          <% } else if (a.peran === 'hr') { %><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <% } else if (a.peran === 'atasan') { %><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5H5v5M12 11.5h7v5"/></svg>
+          <% } else { %><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><% } %>
+        </span>
+        <div class="isi-demo">
+          <h3><%= a.label %></h3>
+          <p><%= a.deskripsi %></p>
+          <dl>
+            <div><dt>Username</dt><dd><code><%= a.username %></code></dd></div>
+            <div><dt>Password</dt><dd><code><%= passwordDemo %></code></dd></div>
+          </dl>
+          <button type="button" class="tombol-demo" data-username="<%= a.username %>" data-password="<%= passwordDemo %>" data-label="<%= a.label %>"
+                  @click="isi($el.dataset.username, $el.dataset.password, $el.dataset.label)"
+                  aria-label="Isi formulir dengan akun demo <%= a.label %>">Pakai akun ini</button>
+        </div>
+      </li>
+      <% }) %>
+    </ul>
+    <p class="status-demo" role="status" aria-live="polite" x-text="pesan"></p>
+    <p class="demo-catatan">Akun demo hanya untuk percobaan dan tidak aktif di lingkungan produksi.</p>
+  </aside>
+  <% } %>
+</main>
+</body>
+</html>

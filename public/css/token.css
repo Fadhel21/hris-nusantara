@@ -1,0 +1,105 @@
+/* Token desain HRIS: tiga lapis.
+   1) Primitif  : nilai mentah (skala warna, ruang, radius, durasi).
+   2) Semantik  : tujuan pemakaian (utama, teks, garis, bahaya...). Komponen hanya memakai lapis ini ke atas.
+   3) Komponen  : token khusus komponen (tombol, kolom isian, kartu) yang merujuk ke semantik.
+   Dipakai bersama oleh app.css dan masuk.css. Tanpa tahap build. */
+
+:root {
+  /* ---------- 1) PRIMITIF ---------- */
+  /* Biru merek */
+  --biru-50: #eef4ff;
+  --biru-100: #dbe6fb;
+  --biru-200: #b9cdf7;
+  --biru-500: #3d86f5;
+  --biru-600: #1f6feb;   /* kontras 4,6:1 di atas putih */
+  --biru-700: #1858bd;
+  /* Navy untuk permukaan gelap */
+  --navy-950: #070e22;
+  --navy-900: #0b1530;
+  --navy-800: #12224a;
+  --navy-700: #1b326b;
+  /* Netral */
+  --abu-0: #ffffff;
+  --abu-50: #f4f6f8;
+  --abu-100: #eceff3;
+  --abu-200: #dde3ea;
+  --abu-400: #8a96a6;
+  --abu-600: #5c6877;    /* kontras 5,7:1 di atas putih */
+  --abu-900: #1c2430;
+  --sidebar-900: #17202b;
+  /* Status */
+  --merah-50: #fdecea;
+  --merah-600: #b42318;  /* kontras 6,5:1 di atas putih */
+  --merah-800: #8f1c12;
+  --hijau-50: #dcf5e4;
+  --hijau-700: #146c2e;
+  --kuning-50: #fff8e1;
+  --kuning-800: #6b4e00;
+  --teal-400: #34d3b8;
+  --ungu-400: #a78bfa;
+
+  /* Ruang (skala 4 px) */
+  --ruang-1: .25rem;
+  --ruang-2: .5rem;
+  --ruang-3: .75rem;
+  --ruang-4: 1rem;
+  --ruang-5: 1.5rem;
+  --ruang-6: 2rem;
+  --ruang-7: 3rem;
+
+  /* Radius & bayangan */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 18px;
+  --radius-bulat: 999px;
+  --bayangan-1: 0 1px 2px rgba(11, 21, 48, .06), 0 1px 3px rgba(11, 21, 48, .08);
+  --bayangan-2: 0 8px 24px rgba(11, 21, 48, .12);
+  --bayangan-3: 0 24px 60px rgba(7, 14, 34, .35);
+
+  /* Gerak: masuk = ease-out, keluar lebih cepat (ease-in). Hanya transform & opacity yang dianimasikan. */
+  --durasi-cepat: 150ms;
+  --durasi-normal: 240ms;
+  --durasi-lambat: 480ms;
+  --ease-masuk: cubic-bezier(.23, 1, .32, 1);
+  --ease-keluar: cubic-bezier(.4, 0, 1, 1);
+  --ease-ubah: cubic-bezier(.645, .045, .355, 1);
+
+  /* Tipografi: tumpukan huruf sistem (tanpa unduhan font) */
+  --font-dasar: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, "SFMono-Regular", Menlo, monospace;
+
+  /* ---------- 2) SEMANTIK ---------- */
+  --warna-latar: var(--abu-50);
+  --warna-permukaan: var(--abu-0);
+  --warna-teks: var(--abu-900);
+  --warna-teks-redup: var(--abu-600);
+  --warna-garis: var(--abu-200);
+  --warna-utama: var(--biru-600);
+  --warna-utama-hover: var(--biru-700);
+  --warna-utama-lembut: var(--biru-100);
+  --warna-di-atas-utama: var(--abu-0);
+  --warna-bahaya: var(--merah-600);
+  --warna-bahaya-lembut: var(--merah-50);
+  --warna-sukses: var(--hijau-700);
+  --warna-sukses-lembut: var(--hijau-50);
+  --warna-fokus: var(--biru-500);
+  --warna-sidebar: var(--sidebar-900);
+
+  /* ---------- 3) KOMPONEN ---------- */
+  --tombol-bg: var(--warna-utama);
+  --tombol-bg-hover: var(--warna-utama-hover);
+  --tombol-teks: var(--warna-di-atas-utama);
+  --tombol-tinggi: 44px;               /* target sentuh minimal */
+  --isian-bg: var(--warna-permukaan);
+  --isian-garis: var(--abu-400);
+  --isian-radius: var(--radius-m);
+  --kartu-bg: var(--warna-permukaan);
+  --kartu-garis: var(--warna-garis);
+  --kartu-radius: var(--radius-m);
+}
+
+/* Cincin fokus yang selalu terlihat bagi pengguna keyboard. */
+:focus-visible {
+  outline: 3px solid var(--warna-fokus);
+  outline-offset: 2px;
+}
