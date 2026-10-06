@@ -37,12 +37,15 @@ test('demo: daftar akun konsisten (username unik, peran dikenal, password memenu
 test('masuk: panel akun demo tampil hanya bila DEMO_AKUN=true', async () => {
   process.env.DEMO_AKUN = 'false';
   const mati = await (await fetch(`${base}/masuk`)).text();
-  assert.ok(!mati.includes('Akun demo') && !mati.includes('demo.hr') && !mati.includes(PASSWORD_DEMO), 'tidak boleh bocor saat dimatikan');
+  assert.ok(!/akun demo/i.test(mati) && !mati.includes('tombol-demo') && !mati.includes('demo.hr') && !mati.includes(PASSWORD_DEMO), 'tidak boleh bocor saat dimatikan');
   process.env.DEMO_AKUN = 'true';
   const hidup = await (await fetch(`${base}/masuk`)).text();
-  assert.ok(hidup.includes('Akun demo'));
+  assert.ok(/akun demo/i.test(hidup));
   for (const a of AKUN_DEMO) assert.ok(hidup.includes(a.username), a.username);
-  assert.strictEqual((hidup.match(/class="kartu-demo/g) || []).length, 4);
+  assert.strictEqual((hidup.match(/class="tombol-demo/g) || []).length, 4);
+  // Susunan: panel akun demo berada di dalam panel kanan, setelah formulir (bukan kolom tersendiri).
+  assert.ok(hidup.indexOf('id="form-masuk"') < hidup.indexOf('id="judul-demo"'));
+  assert.ok(hidup.indexOf('class="masuk-visual"') < hidup.indexOf('class="masuk-kanan"'), 'ikon 3D di kiri (lebih dulu), formulir di kanan');
 });
 
 test('masuk: struktur dan aksesibilitas dasar', async () => {
