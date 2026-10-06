@@ -10,7 +10,8 @@ const { hariDihitung } = require('../../cuti/services/hitung');
 const { rentangBulan } = require('../../absensi/services/waktu');
 const gaji = require('./pengaturan');
 const uang = require('./uang');
-const { hitungSlip, URUTAN_PROGRAM } = require('./hitung');
+const { hitungSlip, nominalPada, URUTAN_PROGRAM } = require('./hitung');
+const { tipeHari: tipeHariLembur, aturanBerlaku, periksaAturan, upahLembur, TIPE_HARI } = require('./lembur');
 
 const HARI_INI_SQL = "(now() AT TIME ZONE 'Asia/Jakarta')::date";
 const POLA_UANG = /^\d{1,13}(\.\d{1,2})?$/;
@@ -90,19 +91,29 @@ async function hitungSemua(exec, periode) {
   if (!daftar.length) return { slip: [], dilewati: 0, galat: [] };
   const ids = daftar.map((d) => d.id);
 
-  const [rGaji, rKomponen, rMaster, rPeserta, rTarif, rParam, rAdj] = await Promise.all([
+  const [rGaji, rKomponen, rMaster, rPeserta, rTarif, rParam, rAdj, rLembur, rAturan] = await Promise.all([
     exec.query('SELECT karyawan_id, tanggal_berlaku, gaji_pokok AS nominal FROM riwayat_gaji WHERE deleted_at IS NULL AND karyawan_id = ANY($1::bigint[]) AND tanggal_berlaku <= $2', [ids, akhir]),
     exec.query('SELECT karyawan_id, komponen_id, tanggal_berlaku, nominal FROM riwayat_komponen_karyawan WHERE deleted_at IS NULL AND karyawan_id = ANY($1::bigint[]) AND tanggal_berlaku <= $2', [ids, akhir]),
-    exec.query('SELECT id, kode, nama, jenis, masuk_dasar_bpjs FROM komponen_gaji WHERE deleted_at IS NULL ORDER BY jenis, nama'),
+    exec.query('SELECT id, kode, nama, jenis, masuk_dasar_bpjs, masuk_dasar_lembur FROM komponen_gaji WHERE deleted_at IS NULL ORDER BY jenis, nama'),
     exec.query('SELECT karyawan_id, program FROM kepesertaan_bpjs WHERE aktif AND deleted_at IS NULL AND karyawan_id = ANY($1::bigint[])', [ids]),
     exec.query('SELECT program, tarif_karyawan, tarif_perusahaan, batas_upah_atas, tanggal_berlaku FROM tarif_bpjs WHERE deleted_at IS NULL AND tanggal_berlaku <= $1', [akhir]),
     exec.query('SELECT nilai, tanggal_berlaku FROM parameter_gaji WHERE deleted_at IS NULL AND kunci = $1 AND tanggal_berlaku <= $2', [gaji.KUNCI_TERLAMBAT, akhir]),
     exec.query("SELECT karyawan_id, jenis, keterangan, nominal FROM penyesuaian_gaji WHERE periode_id = $1 AND deleted_at IS NULL ORDER BY id", [periode.id]),
+    // Lembur yang sudah disetujui pada periode ini, dan aturan lembur yang berlaku sampai akhir periode.
+    exec.query(
+      `SELECT p.karyawan_id, pl.tanggal, pl.menit FROM pengajuan_lembur pl JOIN pengajuan p ON p.id = pl.pengajuan_id
+        WHERE p.status = 'disetujui' AND p.deleted_at IS NULL AND pl.tanggal BETWEEN $1 AND $2 AND p.karyawan_id = ANY($3::bigint[])
+        ORDER BY pl.tanggal, pl.id`, [awal, akhir, ids]),
+    exec.query('SELECT tipe_hari, menit_dari, menit_sampai, pengali, tanggal_berlaku FROM aturan_lembur WHERE deleted_at IS NULL AND tanggal_berlaku <= $1', [akhir]),
   ]);
 
   const param = pilihBerlaku(rParam.rows, akhir);
   if (!param) {
     return { slip: [], dilewati: 0, galat: [`Parameter potongan keterlambatan per menit belum diisi (berlaku sampai ${akhir}). Isi di Pengaturan penggajian (boleh 0).`] };
+  }
+  const pembagiLembur = rLembur.rows.length ? await gaji.parameterBerlaku(exec, 'pembagi_upah_jam_lembur', akhir) : null;
+  if (rLembur.rows.length && !pembagiLembur) {
+    return { slip: [], dilewati: 0, galat: [`Ada lembur yang disetujui, tetapi pembagi upah per jam lembur belum diisi (berlaku sampai ${akhir}).`] };
   }
   const tarifPerProgram = {};
   for (const p of URUTAN_PROGRAM) tarifPerProgram[p] = pilihBerlaku(rTarif.rows.filter((t) => t.program === p), akhir);
@@ -123,9 +134,30 @@ async function hitungSemua(exec, periode) {
         kode: m.kode, nama: m.nama, jenis: m.jenis, masuk_dasar_bpjs: m.masuk_dasar_bpjs,
         riwayat: per(rKomponen.rows, k.id).filter((r) => String(r.komponen_id) === String(m.id)),
       }));
+      // Upah lembur: tiap pengajuan disetujui dihitung dari upah sebulan pada tanggal lembur (gaji pokok + tunjangan
+      // bertanda "dasar lembur"), pembagi, dan aturan pengali yang berlaku sampai akhir periode.
+      const lemburKaryawan = per(rLembur.rows, k.id);
+      let lembur = null;
+      if (lemburKaryawan.length) {
+        let total = 0n;
+        for (const l of lemburKaryawan) {
+          const tipe = tipeHariLembur({ tanggal: l.tanggal, jadwal, libur });
+          const tahap = aturanBerlaku(rAturan.rows, tipe, akhir).map((a) => ({ ...a, pengali: a.pengali }));
+          const masalah = periksaAturan(tahap);
+          if (masalah) throw new Error(`Aturan lembur "${TIPE_HARI[tipe]}" ${masalah} (berlaku sampai ${akhir}).`);
+          let dasar = nominalPada(per(rGaji.rows, k.id), l.tanggal);
+          for (const m of rMaster.rows) {
+            if (m.jenis === 'tunjangan' && m.masuk_dasar_lembur) {
+              dasar += nominalPada(per(rKomponen.rows, k.id).filter((r) => String(r.komponen_id) === String(m.id)), l.tanggal);
+            }
+          }
+          total += upahLembur({ menit: l.menit, tahap, dasarSen: dasar, pembagi: Number(pembagiLembur.nilai) });
+        }
+        lembur = { nominal: uang.dariSen(total), menit: lemburKaryawan.reduce((a, l) => a + l.menit, 0), kali: lemburKaryawan.length };
+      }
       const hasil = hitungSlip({
         hariKerjaPeriode, karyawan: { tanggal_masuk: k.tanggal_masuk, tanggal_keluar: k.tanggal_keluar },
-        gajiPokok: per(rGaji.rows, k.id), komponen,
+        gajiPokok: per(rGaji.rows, k.id), komponen, lembur,
         menitTerlambat: rekap.get(String(k.id)).ringkasan.menitTerlambat, tarifPerMenit: param.nilai,
         bpjs: program.map((p) => ({ program: p, ...tarifPerProgram[p] })),
         penyesuaian: per(rAdj.rows, k.id),

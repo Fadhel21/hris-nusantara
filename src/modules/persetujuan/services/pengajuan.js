@@ -7,8 +7,9 @@ const audit = require('../../pengguna/services/audit');
 const akses = require('../../karyawan/services/akses');
 const alur = require('./alur');
 
-const LABEL_JENIS = { cuti: 'Cuti', izin: 'Izin', koreksi_absensi: 'Koreksi absensi' };
+const LABEL_JENIS = { cuti: 'Cuti', izin: 'Izin', koreksi_absensi: 'Koreksi absensi', lembur: 'Lembur' };
 const MODUL = {
+  lembur: () => require('../../lembur/services/lembur'),
   cuti: () => require('../../cuti/services/cuti'),
   izin: () => require('../../cuti/services/izin'),
   koreksi_absensi: () => require('../../absensi/services/koreksi'),
@@ -88,16 +89,19 @@ const LANGKAH_SQL = `
 const RINGKAS_SQL = `
   SELECT p.id, p.jenis, p.status, p.karyawan_id, p.alasan, p.created_at,
          k.nama AS nama_karyawan, k.nomor_induk,
-         COALESCE(pc.tanggal_mulai, pi.tanggal_mulai, pk.tanggal) AS tanggal_mulai,
-         COALESCE(pc.tanggal_akhir, pi.tanggal_akhir, pk.tanggal) AS tanggal_akhir,
+         COALESCE(pc.tanggal_mulai, pi.tanggal_mulai, pk.tanggal, pl.tanggal) AS tanggal_mulai,
+         COALESCE(pc.tanggal_akhir, pi.tanggal_akhir, pk.tanggal, pl.tanggal) AS tanggal_akhir,
          COALESCE(pc.jumlah_hari, pi.jumlah_hari) AS jumlah_hari,
-         jc.nama AS jenis_cuti, pi.kategori AS kategori_izin
+         jc.nama AS jenis_cuti, pi.kategori AS kategori_izin,
+         to_char(pl.jam_mulai, 'HH24:MI') AS jam_mulai_lembur, to_char(pl.jam_selesai, 'HH24:MI') AS jam_selesai_lembur,
+         pl.menit AS menit_lembur
     FROM pengajuan p
     JOIN karyawan k ON k.id = p.karyawan_id
     LEFT JOIN pengajuan_cuti pc ON pc.pengajuan_id = p.id
     LEFT JOIN jenis_cuti jc ON jc.id = pc.jenis_cuti_id
     LEFT JOIN pengajuan_izin pi ON pi.pengajuan_id = p.id
     LEFT JOIN pengajuan_koreksi pk ON pk.pengajuan_id = p.id
+    LEFT JOIN pengajuan_lembur pl ON pl.pengajuan_id = p.id
    WHERE p.deleted_at IS NULL`;
 
 async function ambilPengajuan(exec, id) {

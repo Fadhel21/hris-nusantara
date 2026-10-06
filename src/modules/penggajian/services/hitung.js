@@ -72,6 +72,12 @@ function hitungSlip(masukan) {
     }
   }
   for (const t of tunjangan) tambah('pendapatan', t.k.kode, t.k.nama, t.sen);
+  // Upah lembur sudah dihitung dari pengajuan yang disetujui (lihat lembur.js); bukan bagian dasar BPJS.
+  if (masukan.lembur && uang.keSen(masukan.lembur.nominal) > 0n) {
+    const j = Math.floor(masukan.lembur.menit / 60);
+    const m = masukan.lembur.menit % 60;
+    tambah('pendapatan', 'LEMBUR', 'Upah lembur', uang.keSen(masukan.lembur.nominal), `${j} jam${m ? ` ${m} menit` : ''} (${masukan.lembur.kali} pengajuan)`);
+  }
   for (const p of masukan.penyesuaian.filter((x) => x.jenis === 'pendapatan')) {
     tambah('pendapatan', 'PENYESUAIAN', p.keterangan, uang.keSen(p.nominal));
   }

@@ -1,11 +1,12 @@
 <%
   var labelStatus = { menunggu: 'Menunggu', disetujui: 'Disetujui', ditolak: 'Ditolak', dibatalkan: 'Dibatalkan' };
   var kelasStatus = { menunggu: 'lencana-tunggu', disetujui: 'lencana-ok', ditolak: 'lencana-tolak', dibatalkan: 'lencana-off' };
-  var labelJenis = { cuti: 'Cuti', izin: 'Izin', koreksi_absensi: 'Koreksi absensi' };
+  var labelJenis = { cuti: 'Cuti', izin: 'Izin', koreksi_absensi: 'Koreksi absensi', lembur: 'Lembur' };
   var labelKategori = { sakit: 'Sakit', keperluan_pribadi: 'Keperluan pribadi', lainnya: 'Lainnya' };
   var rincian = function (r) {
     if (r.jenis === 'cuti') return (r.jenis_cuti || '') + ': ' + fmt.tanggal(r.tanggal_mulai) + (r.tanggal_akhir !== r.tanggal_mulai ? ' s.d. ' + fmt.tanggal(r.tanggal_akhir) : '') + ' (' + r.jumlah_hari + ' hari)';
     if (r.jenis === 'izin') return (labelKategori[r.kategori_izin] || '') + ': ' + fmt.tanggal(r.tanggal_mulai) + (r.tanggal_akhir !== r.tanggal_mulai ? ' s.d. ' + fmt.tanggal(r.tanggal_akhir) : '') + ' (' + r.jumlah_hari + ' hari)';
+    if (r.jenis === 'lembur') return fmt.tanggal(r.tanggal_mulai) + ', ' + r.jam_mulai_lembur + '–' + r.jam_selesai_lembur + ' (' + Math.floor(r.menit_lembur / 60) + ' jam' + (r.menit_lembur % 60 ? ' ' + (r.menit_lembur % 60) + ' menit' : '') + ')';
     return 'Tanggal ' + fmt.tanggal(r.tanggal_mulai);
   };
 %>

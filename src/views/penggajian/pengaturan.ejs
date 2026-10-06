@@ -4,25 +4,68 @@
 <p class="info-catatan">Tidak ada tarif bawaan: semua nilai diisi oleh pemilik dengan tanggal berlaku. Tarif yang berlaku untuk suatu periode adalah yang berlaku pada <strong>tanggal terakhir periode</strong>. Data yang berlaku pada/sebelum periode yang sudah dikunci tidak dapat ditambah atau dihapus.</p>
 
 <section class="kartu blok">
-  <h2>Potongan keterlambatan</h2>
-  <p class="redup">Nominal per menit keterlambatan (Rp). Wajib diisi sebelum gaji dapat dihitung; isi 0 bila keterlambatan tidak dipotong.</p>
+  <h2>Parameter</h2>
+  <p class="redup">Potongan keterlambatan per menit wajib diisi sebelum gaji dapat dihitung (isi 0 bila tidak dipotong). Pembagi upah per jam lembur wajib diisi bila ada lembur yang disetujui. Batas lembur per hari bersifat opsional.</p>
   <div class="tabel-bungkus"><table class="tabel">
-    <thead><tr><th>Berlaku sejak</th><th>Nominal per menit</th><th></th></tr></thead>
+    <thead><tr><th>Parameter</th><th>Berlaku sejak</th><th>Nilai</th><th></th></tr></thead>
     <tbody>
-      <% if (!parameter.length) { %><tr><td colspan="3" class="kosong">Belum diisi.</td></tr><% } %>
+      <% if (!parameter.length) { %><tr><td colspan="4" class="kosong">Belum diisi.</td></tr><% } %>
       <% parameter.forEach(function (p) { %>
-        <tr><td><%= fmt.tanggal(p.tanggal_berlaku) %></td><td><%= fmt.rupiah(p.nilai) %></td>
+        <tr><td><%= parameterDef[p.kunci] ? parameterDef[p.kunci].label : p.kunci %></td><td><%= fmt.tanggal(p.tanggal_berlaku) %></td>
+          <td><%= parameterDef[p.kunci] && parameterDef[p.kunci].tipe === 'uang' ? fmt.rupiah(p.nilai) : String(Number(p.nilai)) %></td>
           <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/penggajian/pengaturan/parameter/<%= p.id %>/hapus" hx-confirm="Hapus nilai ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td></tr>
       <% }) %>
     </tbody>
   </table></div>
-  <details class="tambah"><summary>Tambah nilai</summary>
+  <details class="tambah"><summary>Tambah nilai parameter</summary>
     <form method="post" action="/penggajian/pengaturan/parameter">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="kunci" value="<%= kunciTerlambat %>">
+      <label>Parameter *
+        <select name="kunci" required><option value="">— pilih —</option>
+          <% Object.keys(parameterDef).forEach(function (k) { %><option value="<%= k %>"><%= parameterDef[k].label %></option><% }) %>
+        </select>
+      </label>
       <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
-      <label>Nominal per menit (Rp) *<input type="text" name="nilai" inputmode="decimal" placeholder="1000 atau 0" required></label>
+      <label>Nilai *<input type="text" name="nilai" inputmode="decimal" placeholder="angka; rupiah maks. 2 desimal" required></label>
       <button class="tombol" type="submit">Simpan</button>
+    </form>
+  </details>
+</section>
+
+<section class="kartu blok">
+  <h2>Aturan lembur</h2>
+  <p class="redup">Upah lembur = upah sebulan ÷ pembagi × pengali per tahap menit. Upah sebulan = gaji pokok + tunjangan yang bertanda “masuk dasar upah lembur” (diatur di menu Komponen gaji). Tahap tiap tipe hari harus mulai dari menit 0, bersambung, dan tahap terakhir tanpa batas atas.</p>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Berlaku sejak</th><th>Tipe hari</th><th>Menit lembur</th><th>Pengali</th><th></th></tr></thead>
+    <tbody>
+      <% if (!aturanLembur.length) { %><tr><td colspan="5" class="kosong">Belum ada aturan lembur.</td></tr><% } %>
+      <% aturanLembur.forEach(function (a) { %>
+        <tr>
+          <td><%= fmt.tanggal(a.tanggal_berlaku) %></td><td><%= tipeHari[a.tipe_hari] %></td>
+          <td><%= a.menit_dari %> – <%= a.menit_sampai === null ? 'tanpa batas' : a.menit_sampai %> <span class="redup">(<%= (a.menit_dari / 60).toFixed(2).replace(/\.?0+$/, '') %> – <%= a.menit_sampai === null ? '∞' : (a.menit_sampai / 60).toFixed(2).replace(/\.?0+$/, '') %> jam)</span></td>
+          <td>× <%= a.pengali %></td>
+          <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/penggajian/pengaturan/aturan-lembur/<%= a.id %>/hapus" hx-confirm="Hapus tahap ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+  <details class="tambah"><summary>Terapkan aturan Kepmenaker 102/2004 (sekali klik)</summary>
+    <form method="post" action="/penggajian/pengaturan/aturan-lembur/preset">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <p class="info-catatan">Mengisi <%= preset.aturan.length %> tahap untuk hari kerja, hari libur (5 hari kerja), dan hari libur (6 hari kerja), serta pembagi <%= preset.pembagi %>. <strong>Mohon verifikasi dengan teks resmi sebelum memakainya.</strong> Setelah terisi, tiap angka dapat Anda hapus dan ganti.</p>
+      <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+      <button class="tombol" type="submit">Terapkan preset</button>
+    </form>
+  </details>
+  <details class="tambah"><summary>Tambah satu tahap secara manual</summary>
+    <form method="post" action="/penggajian/pengaturan/aturan-lembur">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Tipe hari *<select name="tipe_hari" required><option value="">— pilih —</option><% Object.keys(tipeHari).forEach(function (k) { %><option value="<%= k %>"><%= tipeHari[k] %></option><% }) %></select></label>
+      <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+      <label>Dari menit ke- *<input type="number" name="menit_dari" min="0" step="1" value="0" required></label>
+      <label>Sampai menit ke- (kosongkan bila tanpa batas)<input type="number" name="menit_sampai" min="1" step="1"></label>
+      <label>Pengali *<input type="text" name="pengali" inputmode="decimal" placeholder="mis. 1.5" required></label>
+      <button class="tombol" type="submit">Simpan tahap</button>
     </form>
   </details>
 </section>

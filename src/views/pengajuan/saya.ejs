@@ -24,6 +24,7 @@
     <div class="tab-daftar" role="tablist">
       <button type="button" :class="{ 'aktif': tab === 'cuti' }" @click="tab = 'cuti'">Cuti</button>
       <button type="button" :class="{ 'aktif': tab === 'izin' }" @click="tab = 'izin'">Izin</button>
+      <button type="button" :class="{ 'aktif': tab === 'lembur' }" @click="tab = 'lembur'">Lembur</button>
       <button type="button" :class="{ 'aktif': tab === 'koreksi' }" @click="tab = 'koreksi'">Koreksi absensi</button>
     </div>
 
@@ -54,6 +55,16 @@
       <label>Tanggal akhir (kosongkan bila satu hari)<input type="date" name="tanggal_akhir" value="<%= tab === 'izin' ? v('tanggal_akhir') : '' %>"></label>
       <label>Alasan *<textarea name="alasan" rows="2" required><%= tab === 'izin' ? v('alasan') : '' %></textarea></label>
       <button class="tombol" type="submit">Ajukan izin</button>
+    </form>
+
+    <form method="post" action="/pengajuan/lembur" class="form-lebar" x-show="tab === 'lembur'" x-cloak x-transition.opacity>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Tanggal *<input type="date" name="tanggal" value="<%= tab === 'lembur' ? v('tanggal') : '' %>" required></label>
+      <label>Jam mulai *<input type="time" name="jam_mulai" value="<%= tab === 'lembur' ? v('jam_mulai') : '' %>" required></label>
+      <label>Jam selesai *<input type="time" name="jam_selesai" value="<%= tab === 'lembur' ? v('jam_selesai') : '' %>" required></label>
+      <label>Alasan / pekerjaan yang dilakukan *<textarea name="alasan" rows="2" required><%= tab === 'lembur' ? v('alasan') : '' %></textarea></label>
+      <p class="redup">Lembur tidak boleh melewati tengah malam (ajukan terpisah per tanggal). Upah lembur dihitung saat penggajian setelah disetujui.</p>
+      <button class="tombol" type="submit">Ajukan lembur</button>
     </form>
 
     <form method="post" action="/pengajuan/koreksi" class="form-lebar" x-show="tab === 'koreksi'" x-cloak x-transition.opacity>

@@ -7,6 +7,7 @@ const akses = require('../../karyawan/services/akses');
 const { tanggalValid } = require('../../karyawan/services/format');
 const kunci = require('./kunci');
 const { URUTAN_PROGRAM, NAMA_PROGRAM } = require('./hitung');
+const { TIPE_HARI, PRESET_KEPMENAKER } = require('./lembur');
 
 function pastikanPengelola(pengguna) {
   if (!['admin', 'hr'].includes(pengguna.peran)) throw new GalatBisnis('Anda tidak berhak melakukan tindakan ini.', 403);
@@ -73,26 +74,44 @@ async function hapusTarifBpjs(pengguna, id) {
 
 const KUNCI_TERLAMBAT = 'potongan_keterlambatan_per_menit';
 
+// Parameter bernilai tunggal yang bertanggal berlaku. Tidak ada nilai bawaan.
+const PARAMETER = {
+  potongan_keterlambatan_per_menit: { label: 'Potongan keterlambatan per menit (Rp)', tipe: 'uang' },
+  pembagi_upah_jam_lembur: { label: 'Pembagi upah per jam lembur', tipe: 'bulat' },
+  lembur_maks_menit_per_hari: { label: 'Batas lembur per hari (menit, opsional)', tipe: 'bulat' },
+};
+const POLA_BULAT = /^[1-9]\d{0,5}$/;
+
 async function daftarParameter() {
   const { rows } = await db.query(
     'SELECT id, kunci, nilai, tanggal_berlaku FROM parameter_gaji WHERE deleted_at IS NULL ORDER BY kunci, tanggal_berlaku DESC');
   return rows;
 }
 
+// Nilai parameter yang berlaku pada tanggal (baris dengan tanggal_berlaku terbaru <= tanggal), atau null bila belum diisi.
+async function parameterBerlaku(exec, kunciParam, tanggal) {
+  const { rows } = await exec.query(
+    `SELECT nilai, tanggal_berlaku FROM parameter_gaji WHERE deleted_at IS NULL AND kunci = $1 AND tanggal_berlaku <= $2
+      ORDER BY tanggal_berlaku DESC LIMIT 1`, [kunciParam, tanggal]);
+  return rows[0] || null;
+}
+
 async function tambahParameter(pengguna, input) {
   pastikanPengelola(pengguna);
-  if (input.kunci !== KUNCI_TERLAMBAT) throw new GalatBisnis('Parameter tidak dikenal.');
+  const def = Object.prototype.hasOwnProperty.call(PARAMETER, input.kunci) ? PARAMETER[input.kunci] : null;
+  if (!def) throw new GalatBisnis('Parameter tidak dikenal.');
   const nilai = String(input.nilai === undefined ? '' : input.nilai).trim();
-  if (!POLA_UANG.test(nilai)) throw new GalatBisnis('Nilai harus berupa angka (maks. 2 desimal, tanpa pemisah ribuan).');
+  if (def.tipe === 'uang' && !POLA_UANG.test(nilai)) throw new GalatBisnis('Nilai harus berupa angka (maks. 2 desimal, tanpa pemisah ribuan).');
+  if (def.tipe === 'bulat' && !POLA_BULAT.test(nilai)) throw new GalatBisnis('Nilai harus berupa bilangan bulat positif.');
   const tanggal = bacaTanggal(input.tanggal_berlaku);
   try {
     await db.transaksi(async (c) => {
       await kunci.pastikanBelumTerkunci(c, tanggal, 'Parameter ini');
       const { rows } = await c.query(
-        'INSERT INTO parameter_gaji (kunci, nilai, tanggal_berlaku) VALUES ($1, $2, $3) RETURNING id', [KUNCI_TERLAMBAT, nilai, tanggal]);
+        'INSERT INTO parameter_gaji (kunci, nilai, tanggal_berlaku) VALUES ($1, $2, $3) RETURNING id', [input.kunci, nilai, tanggal]);
       await audit.catat({
         penggunaId: pengguna.id, aksi: 'tambah_parameter_gaji', entitas: 'pengaturan.parameter_gaji', entitasId: rows[0].id,
-        sesudah: { kunci: KUNCI_TERLAMBAT, nilai, tanggal_berlaku: tanggal },
+        sesudah: { kunci: input.kunci, nilai, tanggal_berlaku: tanggal },
       }, c);
     });
   } catch (err) {
@@ -203,13 +222,90 @@ async function hapusKomponenKaryawan(pengguna, karyawanId, riwayatId) {
   });
 }
 
+// --- Aturan lembur -----------------------------------------------------------------------------
+
+async function daftarAturanLembur() {
+  const { rows } = await db.query(
+    `SELECT id, tipe_hari, menit_dari, menit_sampai, pengali, tanggal_berlaku FROM aturan_lembur
+      WHERE deleted_at IS NULL ORDER BY tanggal_berlaku DESC, tipe_hari, menit_dari`);
+  return rows;
+}
+
+async function tambahAturanLembur(pengguna, input) {
+  pastikanPengelola(pengguna);
+  if (!Object.prototype.hasOwnProperty.call(TIPE_HARI, input.tipe_hari)) throw new GalatBisnis('Tipe hari tidak valid.');
+  const dari = String(input.menit_dari === undefined ? '' : input.menit_dari).trim();
+  const sampai = String(input.menit_sampai === undefined ? '' : input.menit_sampai).trim();
+  if (!/^\d{1,5}$/.test(dari)) throw new GalatBisnis('Menit mulai harus bilangan bulat tidak negatif.');
+  if (sampai && (!/^\d{1,5}$/.test(sampai) || Number(sampai) <= Number(dari))) throw new GalatBisnis('Menit akhir harus bilangan bulat lebih besar dari menit mulai (kosongkan bila tanpa batas).');
+  const pengali = String(input.pengali === undefined ? '' : input.pengali).trim();
+  if (!/^\d{1,2}(\.\d{1,2})?$/.test(pengali) || Number(pengali) <= 0 || Number(pengali) > 20) throw new GalatBisnis('Pengali harus berupa angka positif (maks. 2 desimal, maksimum 20).');
+  const tanggal = bacaTanggal(input.tanggal_berlaku);
+  try {
+    await db.transaksi(async (c) => {
+      await kunci.pastikanBelumTerkunci(c, tanggal, 'Aturan lembur ini');
+      const { rowCount } = await c.query(
+        `SELECT 1 FROM aturan_lembur WHERE tipe_hari = $1 AND tanggal_berlaku = $2 AND deleted_at IS NULL
+            AND menit_dari < COALESCE($4::int, 2147483647) AND COALESCE(menit_sampai, 2147483647) > $3::int`,
+        [input.tipe_hari, tanggal, Number(dari), sampai ? Number(sampai) : null]);
+      if (rowCount) throw new GalatBisnis('Rentang menit bertumpang tindih dengan tahap lain pada tipe hari dan tanggal berlaku yang sama.', 409);
+      const { rows } = await c.query(
+        'INSERT INTO aturan_lembur (tipe_hari, menit_dari, menit_sampai, pengali, tanggal_berlaku) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [input.tipe_hari, Number(dari), sampai ? Number(sampai) : null, pengali, tanggal]);
+      await audit.catat({
+        penggunaId: pengguna.id, aksi: 'tambah_aturan_lembur', entitas: 'pengaturan.aturan_lembur', entitasId: rows[0].id,
+        sesudah: { tipe_hari: input.tipe_hari, menit_dari: Number(dari), menit_sampai: sampai ? Number(sampai) : null, pengali, tanggal_berlaku: tanggal },
+      }, c);
+    });
+  } catch (err) {
+    if (err.code === '23505') throw new GalatBisnis('Sudah ada tahap dengan menit mulai dan tanggal berlaku tersebut.', 409);
+    throw err;
+  }
+}
+
+async function hapusAturanLembur(pengguna, id) {
+  pastikanPengelola(pengguna);
+  await db.transaksi(async (c) => {
+    const { rows } = await c.query('SELECT * FROM aturan_lembur WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [id]);
+    if (!rows[0]) throw new GalatBisnis('Aturan tidak ditemukan.', 404);
+    await kunci.pastikanBelumTerkunci(c, rows[0].tanggal_berlaku, 'Aturan lembur ini');
+    await c.query('UPDATE aturan_lembur SET deleted_at = now(), updated_at = now() WHERE id = $1', [id]);
+    await audit.catat({ penggunaId: pengguna.id, aksi: 'hapus_aturan_lembur', entitas: 'pengaturan.aturan_lembur', entitasId: id, sebelum: rows[0] }, c);
+  });
+}
+
+// Mengisi seluruh aturan lembur sesuai preset Kepmenaker 102/2004 beserta pembagi 173, atas permintaan eksplisit pemilik.
+async function terapkanPresetKepmenaker(pengguna, input) {
+  pastikanPengelola(pengguna);
+  const tanggal = bacaTanggal(input.tanggal_berlaku);
+  await db.transaksi(async (c) => {
+    await kunci.pastikanBelumTerkunci(c, tanggal, 'Aturan lembur ini');
+    const { rowCount } = await c.query('SELECT 1 FROM aturan_lembur WHERE tanggal_berlaku = $1 AND deleted_at IS NULL', [tanggal]);
+    if (rowCount) throw new GalatBisnis('Sudah ada aturan lembur pada tanggal berlaku tersebut. Hapus dulu atau pilih tanggal lain.', 409);
+    for (const a of PRESET_KEPMENAKER.aturan) {
+      await c.query(
+        'INSERT INTO aturan_lembur (tipe_hari, menit_dari, menit_sampai, pengali, tanggal_berlaku) VALUES ($1, $2, $3, $4, $5)',
+        [a.tipe_hari, a.menit_dari, a.menit_sampai, a.pengali, tanggal]);
+    }
+    const ada = await c.query("SELECT 1 FROM parameter_gaji WHERE kunci = 'pembagi_upah_jam_lembur' AND tanggal_berlaku = $1 AND deleted_at IS NULL", [tanggal]);
+    if (!ada.rowCount) {
+      await c.query("INSERT INTO parameter_gaji (kunci, nilai, tanggal_berlaku) VALUES ('pembagi_upah_jam_lembur', $1, $2)", [PRESET_KEPMENAKER.pembagi, tanggal]);
+    }
+    await audit.catat({
+      penggunaId: pengguna.id, aksi: 'terapkan_preset_lembur', entitas: 'pengaturan.aturan_lembur', entitasId: tanggal,
+      sesudah: { sumber: 'Kepmenaker 102/2004', tanggal_berlaku: tanggal, pembagi: PRESET_KEPMENAKER.pembagi, jumlah_tahap: PRESET_KEPMENAKER.aturan.length },
+    }, c);
+  });
+}
+
 // Hak lihat komponen/BPJS karyawan: hanya pengelola (admin/HR).
 function pastikanBolehLihat(pengguna) {
   if (!akses.semuaData(pengguna)) throw new GalatBisnis('Data tidak ditemukan.', 404);
 }
 
 module.exports = {
-  KUNCI_TERLAMBAT, daftarTarifBpjs, tambahTarifBpjs, hapusTarifBpjs, daftarParameter, tambahParameter, hapusParameter,
+  KUNCI_TERLAMBAT, PARAMETER, daftarTarifBpjs, tambahTarifBpjs, hapusTarifBpjs, daftarParameter, parameterBerlaku, tambahParameter, hapusParameter,
+  daftarAturanLembur, tambahAturanLembur, hapusAturanLembur, terapkanPresetKepmenaker,
   kepesertaan, aturKepesertaan, daftarKomponenKaryawan, daftarKomponenAktif, tambahKomponenKaryawan, hapusKomponenKaryawan,
   pastikanBolehLihat,
 };

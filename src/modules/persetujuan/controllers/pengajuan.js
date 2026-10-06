@@ -3,6 +3,7 @@ const alur = require('../services/alur');
 const cuti = require('../../cuti/services/cuti');
 const izin = require('../../cuti/services/izin');
 const koreksi = require('../../absensi/services/koreksi');
+const lembur = require('../../lembur/services/lembur');
 const saldo = require('../../cuti/services/saldo');
 const waktu = require('../../absensi/services/waktu');
 const { GalatBisnis } = require('../../../config/galat');
@@ -39,6 +40,7 @@ function ajukan(tab, fungsi) {
 const ajukanCuti = ajukan('cuti', cuti.ajukan);
 const ajukanIzin = ajukan('izin', izin.ajukan);
 const ajukanKoreksi = ajukan('koreksi', koreksi.ajukan);
+const ajukanLembur = ajukan('lembur', lembur.ajukan);
 
 async function tampilDetail(req, res, next, { galat = null, status = 200 } = {}) {
   try {
@@ -91,4 +93,4 @@ async function ubahPengaturan(req, res, next) {
   }
 }
 
-module.exports = { saya, ajukanCuti, ajukanIzin, ajukanKoreksi, detail, putuskan, batal, inbox, pengaturan, ubahPengaturan };
+module.exports = { saya, ajukanCuti, ajukanIzin, ajukanKoreksi, ajukanLembur, detail, putuskan, batal, inbox, pengaturan, ubahPengaturan };

@@ -35,6 +35,9 @@ router.post('/penggajian/periode/:id/penyesuaian/:aid/hapus', pengelola, ctl.hap
 router.get('/penggajian/pengaturan', pengelola, ctl.halamanPengaturan);
 router.post('/penggajian/pengaturan/tarif-bpjs', pengelola, ctl.tambahTarif);
 router.post('/penggajian/pengaturan/tarif-bpjs/:id/hapus', pengelola, ctl.hapusTarif);
+router.post('/penggajian/pengaturan/aturan-lembur', pengelola, ctl.tambahAturan);
+router.post('/penggajian/pengaturan/aturan-lembur/preset', pengelola, ctl.terapkanPreset);
+router.post('/penggajian/pengaturan/aturan-lembur/:id/hapus', pengelola, ctl.hapusAturan);
 router.post('/penggajian/pengaturan/parameter', pengelola, ctl.tambahParameter);
 router.post('/penggajian/pengaturan/parameter/:id/hapus', pengelola, ctl.hapusParameter);
 

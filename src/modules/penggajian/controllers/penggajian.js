@@ -2,6 +2,7 @@ const periode = require('../services/periode');
 const slip = require('../services/slip');
 const pengaturan = require('../services/pengaturan');
 const { URUTAN_PROGRAM, NAMA_PROGRAM } = require('../services/hitung');
+const { TIPE_HARI, PRESET_KEPMENAKER } = require('../services/lembur');
 const { GalatBisnis } = require('../../../config/galat');
 
 const GALAT_TERBUKA = (err) => err instanceof GalatBisnis && err.status !== 403 && err.status !== 404;
@@ -88,6 +89,8 @@ async function tampilPengaturan(req, res, next, { galat = null, status = 200 } =
     res.status(status).render('penggajian/pengaturan', {
       galat, tarif: await pengaturan.daftarTarifBpjs(), parameter: await pengaturan.daftarParameter(),
       program: URUTAN_PROGRAM, namaProgram: NAMA_PROGRAM, kunciTerlambat: pengaturan.KUNCI_TERLAMBAT,
+      parameterDef: pengaturan.PARAMETER, aturanLembur: await pengaturan.daftarAturanLembur(), tipeHari: TIPE_HARI,
+      preset: PRESET_KEPMENAKER,
     });
   } catch (err) { next(err); }
 }
@@ -118,10 +121,14 @@ function hapusDengan(fungsi) {
   };
 }
 
+const tambahAturan = aksiPengaturan((req) => pengaturan.tambahAturanLembur(req.pengguna, req.body));
+const terapkanPreset = aksiPengaturan((req) => pengaturan.terapkanPresetKepmenaker(req.pengguna, req.body));
+const hapusAturan = hapusDengan((req) => pengaturan.hapusAturanLembur(req.pengguna, req.params.id));
 const hapusTarif = hapusDengan((req) => pengaturan.hapusTarifBpjs(req.pengguna, req.params.id));
 const hapusParameter = hapusDengan((req) => pengaturan.hapusParameter(req.pengguna, req.params.id));
 
 module.exports = {
   daftar: (req, res, next) => daftar(req, res, next), buatPeriode, detailPeriode, hitung, kunci, mintaBuka, putuskanBuka,
   tambahPenyesuaian, hapusPenyesuaian, lihatSlip, pdfSlip, slipSaya, halamanPengaturan, tambahTarif, tambahParameter, hapusTarif, hapusParameter,
+  tambahAturan, terapkanPreset, hapusAturan,
 };

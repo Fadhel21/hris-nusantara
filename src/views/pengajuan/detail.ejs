@@ -28,6 +28,10 @@
       <dt>Kategori</dt><dd><%= d.kategori_label %></dd>
       <dt>Tanggal</dt><dd><%= fmt.tanggal(d.tanggal_mulai) %> s.d. <%= fmt.tanggal(d.tanggal_akhir) %></dd>
       <dt>Hari dihitung</dt><dd><%= d.jumlah_hari %> hari kerja</dd>
+    <% } else if (p.jenis === 'lembur') { %>
+      <dt>Tanggal</dt><dd><%= fmt.tanggal(d.tanggal) %></dd>
+      <dt>Jam</dt><dd><%= d.jam_mulai %> – <%= d.jam_selesai %></dd>
+      <dt>Durasi</dt><dd><%= d.durasi %></dd>
     <% } else if (p.jenis === 'koreksi_absensi') { %>
       <dt>Tanggal</dt><dd><%= fmt.tanggal(d.tanggal) %></dd>
       <dt>Jam masuk</dt><dd><%= d.tercatat.masuk || 'tidak tercatat' %> → <strong><%= d.jam_masuk || 'tidak diubah' %></strong></dd>

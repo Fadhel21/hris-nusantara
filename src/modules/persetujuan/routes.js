@@ -19,6 +19,7 @@ router.get('/pengajuan', ctl.saya);
 router.post('/pengajuan/cuti', ctl.ajukanCuti);
 router.post('/pengajuan/izin', ctl.ajukanIzin);
 router.post('/pengajuan/koreksi', ctl.ajukanKoreksi);
+router.post('/pengajuan/lembur', ctl.ajukanLembur);
 router.get('/pengajuan/:id', ctl.detail);
 router.post('/pengajuan/:id/batal', ctl.batal);
 
