@@ -184,7 +184,7 @@
 }
 @media (max-width: 759px) {
   .masuk { grid-template-columns: 1fr; grid-template-rows: auto 1fr; grid-template-areas: "visual" "kanan"; }
-  .masuk-visual { flex-direction: row; gap: var(--ruang-5); padding: var(--ruang-5) var(--ruang-4); }
+  .masuk-visual { flex-direction: row; gap: var(--ruang-5); padding: var(--ruang-6) var(--ruang-4); }
   .adegan { --u: 84px; }
   .bayangan-lantai { margin-top: 30px; width: 100px; }
   .teks-visual { text-align: left; }
