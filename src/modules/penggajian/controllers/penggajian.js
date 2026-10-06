@@ -1,4 +1,5 @@
 const periode = require('../services/periode');
+const pajak = require('../services/pajak');
 const slip = require('../services/slip');
 const pengaturan = require('../services/pengaturan');
 const { URUTAN_PROGRAM, NAMA_PROGRAM } = require('../services/hitung');
@@ -124,11 +125,50 @@ function hapusDengan(fungsi) {
 const tambahAturan = aksiPengaturan((req) => pengaturan.tambahAturanLembur(req.pengguna, req.body));
 const terapkanPreset = aksiPengaturan((req) => pengaturan.terapkanPresetKepmenaker(req.pengguna, req.body));
 const hapusAturan = hapusDengan((req) => pengaturan.hapusAturanLembur(req.pengguna, req.params.id));
+async function halamanPajak(req, res, next, { galat = null, status = 200 } = {}) {
+  try {
+    res.status(status).render('penggajian/pajak', {
+      galat, ringkasan: await pajak.ringkasan(), parameterDef: pengaturan.PARAMETER, parameter: await pengaturan.daftarParameter(),
+    });
+  } catch (err) { next(err); }
+}
+
+const pajakHalaman = (req, res, next) => halamanPajak(req, res, next);
+
+async function aturMulaiPajak(req, res, next) {
+  try {
+    await pajak.aturMulai(req.pengguna, req.body.mulai);
+    res.redirect('/penggajian/pajak');
+  } catch (err) {
+    if (GALAT_TERBUKA(err)) return halamanPajak(req, res, next, { galat: err.message, status: err.status });
+    return next(err);
+  }
+}
+
+// Impor CSV dua tahap: ?mode=validasi (default) hanya memeriksa; ?mode=simpan menyimpan bila tidak ada galat.
+async function imporPajak(req, res, next) {
+  try {
+    if (typeof req.body !== 'string' || !req.body.trim()) throw new GalatBisnis('Kirim isi berkas CSV (Content-Type: text/csv).', 415);
+    const hasil = await pajak.impor(req.pengguna, req.params.jenis, req.body, req.query.mode === 'simpan' ? 'simpan' : 'validasi');
+    res.status(hasil.galat.length ? 422 : 200).json(hasil);
+  } catch (err) { next(err); }
+}
+
+async function hapusSetPajak(req, res, next) {
+  try {
+    await pajak.hapusSet(req.pengguna, req.params.jenis, req.params.tanggal, req.query.kategori || null);
+    res.redirect('/penggajian/pajak');
+  } catch (err) {
+    if (GALAT_TERBUKA(err)) return halamanPajak(req, res, next, { galat: err.message, status: err.status });
+    return next(err);
+  }
+}
+
 const hapusTarif = hapusDengan((req) => pengaturan.hapusTarifBpjs(req.pengguna, req.params.id));
 const hapusParameter = hapusDengan((req) => pengaturan.hapusParameter(req.pengguna, req.params.id));
 
 module.exports = {
   daftar: (req, res, next) => daftar(req, res, next), buatPeriode, detailPeriode, hitung, kunci, mintaBuka, putuskanBuka,
   tambahPenyesuaian, hapusPenyesuaian, lihatSlip, pdfSlip, slipSaya, halamanPengaturan, tambahTarif, tambahParameter, hapusTarif, hapusParameter,
-  tambahAturan, terapkanPreset, hapusAturan,
+  tambahAturan, terapkanPreset, hapusAturan, pajakHalaman, aturMulaiPajak, imporPajak, hapusSetPajak,
 };

@@ -3,6 +3,7 @@ const riwayat = require('../services/riwayat');
 const profil = require('../services/profil');
 const validasi = require('../services/validasi');
 const gajiPengaturan = require('../../penggajian/services/pengaturan');
+const pajakSvc = require('../../penggajian/services/pajak');
 const akses = require('../services/akses');
 const { GalatBisnis } = require('../../../config/galat');
 
@@ -87,9 +88,18 @@ const tambahKontrak = aksiDetail((req) => riwayat.tambahKontrak(req.pengguna, re
 const tambahKeluarga = aksiDetail((req) => profil.tambah(req.pengguna, req.params.id, 'keluarga', req.body));
 const tambahPendidikan = aksiDetail((req) => profil.tambah(req.pengguna, req.params.id, 'pendidikan', req.body));
 const tambahKomponen = aksiDetail((req) => gajiPengaturan.tambahKomponenKaryawan(req.pengguna, req.params.id, req.body));
+const tambahStatusPajak = aksiDetail((req) => pajakSvc.tambahStatus(req.pengguna, req.params.id, req.body));
+const simpanSaldoAwalPajak = aksiDetail((req) => pajakSvc.simpanSaldoAwal(req.pengguna, req.params.id, req.body));
 const aturBpjs = aksiDetail((req) => gajiPengaturan.aturKepesertaan(req.pengguna, req.params.id, req.body));
 const keluarkan = aksiDetail((req) => svc.keluarkan(req.pengguna, req.params.id, req.body));
 const buatAkun = aksiDetail((req) => svc.buatAkun(req.pengguna, req.params.id, req.body));
+
+async function hapusStatusPajak(req, res, next) {
+  try {
+    await pajakSvc.hapusStatus(req.pengguna, req.params.id, req.params.rid);
+    res.status(200).send('');
+  } catch (err) { next(err); }
+}
 
 async function hapusKomponen(req, res, next) {
   try {
@@ -109,5 +119,6 @@ async function hapusRiwayat(req, res, next) {
 module.exports = {
   daftar, saya, detail, formBaru, simpanBaru, formUbah, simpanUbah,
   tambahPenempatan, tambahGaji, tambahKontrak, tambahKeluarga, tambahPendidikan, tambahKomponen, aturBpjs, hapusKomponen,
+  tambahStatusPajak, simpanSaldoAwalPajak, hapusStatusPajak,
   keluarkan, buatAkun, hapusRiwayat,
 };

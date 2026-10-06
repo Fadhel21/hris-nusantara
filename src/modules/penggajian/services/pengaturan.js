@@ -26,8 +26,8 @@ function bacaTanggal(nilai, label = 'Tanggal berlaku') {
 
 async function daftarTarifBpjs() {
   const { rows } = await db.query(
-    `SELECT id, program, tarif_karyawan, tarif_perusahaan, batas_upah_atas, tanggal_berlaku FROM tarif_bpjs
-      WHERE deleted_at IS NULL ORDER BY program, tanggal_berlaku DESC`);
+    `SELECT id, program, tarif_karyawan, tarif_perusahaan, batas_upah_atas, tanggal_berlaku, perusahaan_kena_pajak, iuran_karyawan_pengurang_pajak
+       FROM tarif_bpjs WHERE deleted_at IS NULL ORDER BY program, tanggal_berlaku DESC`);
   return rows.sort((a, b) => URUTAN_PROGRAM.indexOf(a.program) - URUTAN_PROGRAM.indexOf(b.program) || (a.tanggal_berlaku < b.tanggal_berlaku ? 1 : -1));
 }
 
@@ -45,12 +45,17 @@ async function tambahTarifBpjs(pengguna, input) {
   try {
     await db.transaksi(async (c) => {
       await kunci.pastikanBelumTerkunci(c, tanggal, 'Tarif BPJS ini');
+      const prsKenaPajak = ['1', 'true', 'on'].includes(String(input.perusahaan_kena_pajak || ''));
+      const iuranPengurang = ['1', 'true', 'on'].includes(String(input.iuran_karyawan_pengurang_pajak || ''));
       const { rows } = await c.query(
-        `INSERT INTO tarif_bpjs (program, tarif_karyawan, tarif_perusahaan, batas_upah_atas, tanggal_berlaku)
-         VALUES ($1, $2, $3, $4, $5) RETURNING id`, [program, tk, tp, batasMentah || null, tanggal]);
+        `INSERT INTO tarif_bpjs (program, tarif_karyawan, tarif_perusahaan, batas_upah_atas, tanggal_berlaku, perusahaan_kena_pajak, iuran_karyawan_pengurang_pajak)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`, [program, tk, tp, batasMentah || null, tanggal, prsKenaPajak, iuranPengurang]);
       await audit.catat({
         penggunaId: pengguna.id, aksi: 'tambah_tarif_bpjs', entitas: 'pengaturan.tarif_bpjs', entitasId: rows[0].id,
-        sesudah: { program, tarif_karyawan: tk, tarif_perusahaan: tp, batas_upah_atas: batasMentah || null, tanggal_berlaku: tanggal },
+        sesudah: {
+          program, tarif_karyawan: tk, tarif_perusahaan: tp, batas_upah_atas: batasMentah || null, tanggal_berlaku: tanggal,
+          perusahaan_kena_pajak: prsKenaPajak, iuran_karyawan_pengurang_pajak: iuranPengurang,
+        },
       }, c);
     });
   } catch (err) {
@@ -79,6 +84,10 @@ const PARAMETER = {
   potongan_keterlambatan_per_menit: { label: 'Potongan keterlambatan per menit (Rp)', tipe: 'uang' },
   pembagi_upah_jam_lembur: { label: 'Pembagi upah per jam lembur', tipe: 'bulat' },
   lembur_maks_menit_per_hari: { label: 'Batas lembur per hari (menit, opsional)', tipe: 'bulat' },
+  biaya_jabatan_persen: { label: 'PPh 21: biaya jabatan (persen dari bruto setahun)', tipe: 'uang' },
+  biaya_jabatan_maks_per_bulan: { label: 'PPh 21: biaya jabatan maksimum per bulan (Rp)', tipe: 'uang' },
+  pembulatan_pkp: { label: 'PPh 21: PKP dibulatkan ke bawah ke kelipatan (Rp)', tipe: 'bulat' },
+  pengali_tanpa_npwp: { label: 'PPh 21: pengali bila tanpa NPWP (mis. 1.20; isi 1 bila tanpa tambahan)', tipe: 'uang' },
 };
 const POLA_BULAT = /^[1-9]\d{0,5}$/;
 

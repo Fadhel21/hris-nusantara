@@ -36,7 +36,7 @@
     <dt>Total potongan</dt><dd><%= fmt.rupiah(slip.total_potongan) %></dd>
     <dt><strong>Gaji bersih</strong></dt><dd><strong><%= fmt.rupiah(slip.gaji_bersih) %></strong></dd>
   </dl>
-  <p class="redup">Gaji bersih belum memperhitungkan PPh 21.</p>
+  <% if (!slip.metode_pajak) { %><p class="redup">Gaji bersih belum memperhitungkan PPh 21.</p><% } %>
 </section>
 
 <% if (beban.length) { %>

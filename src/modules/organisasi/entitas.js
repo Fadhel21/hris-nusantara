@@ -96,8 +96,12 @@ const entitas = {
         nama: 'masuk_dasar_lembur', label: 'Masuk dasar upah lembur', tipe: 'select', wajib: true,
         opsi: [{ id: 'false', label: 'Tidak' }, { id: 'true', label: 'Ya (hanya untuk tunjangan tetap)' }],
       },
+      {
+        nama: 'kena_pajak', label: 'Termasuk penghasilan bruto PPh 21', tipe: 'select', wajib: true,
+        opsi: [{ id: 'true', label: 'Ya (hanya untuk tunjangan)' }, { id: 'false', label: 'Tidak' }],
+      },
     ],
-    kolom: ['kode', 'nama', 'jenis', 'masuk_dasar_bpjs', 'masuk_dasar_lembur'],
+    kolom: ['kode', 'nama', 'jenis', 'masuk_dasar_bpjs', 'masuk_dasar_lembur', 'kena_pajak'],
     unik: 'Kode komponen gaji sudah dipakai.',
     dipakai: [{ tabel: 'riwayat_komponen_karyawan', kolom: 'komponen_id', pesan: 'sudah dipakai pada gaji karyawan' }],
   },

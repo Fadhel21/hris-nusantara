@@ -9,6 +9,7 @@ const akses = require('../../karyawan/services/akses');
 const { hariDihitung } = require('../../cuti/services/hitung');
 const { rentangBulan } = require('../../absensi/services/waktu');
 const gaji = require('./pengaturan');
+const pajak = require('./pajak');
 const uang = require('./uang');
 const { hitungSlip, nominalPada, URUTAN_PROGRAM } = require('./hitung');
 const { tipeHari: tipeHariLembur, aturanBerlaku, periksaAturan, upahLembur, TIPE_HARI } = require('./lembur');
@@ -77,7 +78,7 @@ async function hitungSemua(exec, periode) {
   if (!hariKerjaPeriode.length) return { slip: [], dilewati: 0, galat: ['Periode tidak memiliki hari kerja menurut jadwal kerja.'] };
 
   const { rows: daftar } = await exec.query(
-    `SELECT k.id, k.nomor_induk, k.nama, k.tanggal_masuk, k.tanggal_keluar,
+    `SELECT k.id, k.nomor_induk, k.nama, k.tanggal_masuk, k.tanggal_keluar, k.npwp,
             COALESCE(c.zona_waktu, 'Asia/Jakarta') AS zona, j.nama AS jabatan, d.nama AS departemen
        FROM karyawan k
        LEFT JOIN LATERAL (
@@ -94,9 +95,9 @@ async function hitungSemua(exec, periode) {
   const [rGaji, rKomponen, rMaster, rPeserta, rTarif, rParam, rAdj, rLembur, rAturan] = await Promise.all([
     exec.query('SELECT karyawan_id, tanggal_berlaku, gaji_pokok AS nominal FROM riwayat_gaji WHERE deleted_at IS NULL AND karyawan_id = ANY($1::bigint[]) AND tanggal_berlaku <= $2', [ids, akhir]),
     exec.query('SELECT karyawan_id, komponen_id, tanggal_berlaku, nominal FROM riwayat_komponen_karyawan WHERE deleted_at IS NULL AND karyawan_id = ANY($1::bigint[]) AND tanggal_berlaku <= $2', [ids, akhir]),
-    exec.query('SELECT id, kode, nama, jenis, masuk_dasar_bpjs, masuk_dasar_lembur FROM komponen_gaji WHERE deleted_at IS NULL ORDER BY jenis, nama'),
+    exec.query('SELECT id, kode, nama, jenis, masuk_dasar_bpjs, masuk_dasar_lembur, kena_pajak FROM komponen_gaji WHERE deleted_at IS NULL ORDER BY jenis, nama'),
     exec.query('SELECT karyawan_id, program FROM kepesertaan_bpjs WHERE aktif AND deleted_at IS NULL AND karyawan_id = ANY($1::bigint[])', [ids]),
-    exec.query('SELECT program, tarif_karyawan, tarif_perusahaan, batas_upah_atas, tanggal_berlaku FROM tarif_bpjs WHERE deleted_at IS NULL AND tanggal_berlaku <= $1', [akhir]),
+    exec.query('SELECT program, tarif_karyawan, tarif_perusahaan, batas_upah_atas, tanggal_berlaku, perusahaan_kena_pajak, iuran_karyawan_pengurang_pajak FROM tarif_bpjs WHERE deleted_at IS NULL AND tanggal_berlaku <= $1', [akhir]),
     exec.query('SELECT nilai, tanggal_berlaku FROM parameter_gaji WHERE deleted_at IS NULL AND kunci = $1 AND tanggal_berlaku <= $2', [gaji.KUNCI_TERLAMBAT, akhir]),
     exec.query("SELECT karyawan_id, jenis, keterangan, nominal FROM penyesuaian_gaji WHERE periode_id = $1 AND deleted_at IS NULL ORDER BY id", [periode.id]),
     // Lembur yang sudah disetujui pada periode ini, dan aturan lembur yang berlaku sampai akhir periode.
@@ -121,6 +122,31 @@ async function hitungSemua(exec, periode) {
   const rekap = await absensiCatat.rekapUntuk(
     daftar.map((d) => ({ id: d.id, tanggal_masuk: d.tanggal_masuk, tanggal_keluar: d.tanggal_keluar, zona: d.zona })), awal, akhir);
 
+  // PPh 21: hanya dihitung mulai periode yang ditetapkan (pph21_mulai). Tabel & data pendukung dimuat sekali.
+  let ctxPajak = null;
+  if (pajak.aktifUntuk(await pajak.ambilMulai(exec), periode.tahun, periode.bulan)) {
+    const [rPtkp, rTer, rLap, rStatus, rSaldo, rSlip] = await Promise.all([
+      exec.query('SELECT kode, ptkp_tahunan, kategori_ter, tanggal_berlaku FROM ptkp_status WHERE deleted_at IS NULL AND tanggal_berlaku <= $1', [akhir]),
+      exec.query('SELECT kategori, batas_bawah, batas_atas, tarif, tanggal_berlaku FROM tarif_ter WHERE deleted_at IS NULL AND tanggal_berlaku <= $1', [akhir]),
+      exec.query('SELECT batas_bawah, batas_atas, tarif, tanggal_berlaku FROM lapisan_pph21 WHERE deleted_at IS NULL AND tanggal_berlaku <= $1', [akhir]),
+      exec.query('SELECT karyawan_id, kode_status, tanggal_berlaku FROM riwayat_status_pajak WHERE deleted_at IS NULL AND karyawan_id = ANY($1::bigint[]) AND tanggal_berlaku <= $2', [ids, akhir]),
+      exec.query('SELECT karyawan_id, sampai_bulan, bruto_ytd, iuran_pengurang_ytd, pph21_ytd FROM saldo_awal_pajak WHERE deleted_at IS NULL AND tahun = $1 AND karyawan_id = ANY($2::bigint[])', [periode.tahun, ids]),
+      exec.query(
+        `SELECT s.karyawan_id, p.bulan, p.status, s.bruto_pajak, s.iuran_pengurang_pajak, s.pph21, s.metode_pajak
+           FROM slip_gaji s JOIN periode_gaji p ON p.id = s.periode_id
+          WHERE s.deleted_at IS NULL AND p.deleted_at IS NULL AND p.tahun = $1 AND p.bulan < $2 AND s.karyawan_id = ANY($3::bigint[])`, [periode.tahun, periode.bulan, ids]),
+    ]);
+    const nilaiParam = async (kunciParam) => { const p = await gaji.parameterBerlaku(exec, kunciParam, akhir); return p ? p.nilai : null; };
+    ctxPajak = {
+      tahun: periode.tahun, bulan: periode.bulan, awal, akhir, ptkp: rPtkp.rows, ter: rTer.rows, lapisan: rLap.rows,
+      riwayatStatus: rStatus.rows, saldoAwal: rSaldo.rows, slipSebelum: rSlip.rows,
+      parameter: {
+        biayaJabatanPersen: await nilaiParam('biaya_jabatan_persen'), biayaJabatanMaksPerBulan: await nilaiParam('biaya_jabatan_maks_per_bulan'),
+        pembulatanPkp: await nilaiParam('pembulatan_pkp'), pengaliTanpaNpwp: await nilaiParam('pengali_tanpa_npwp'),
+      },
+    };
+  }
+
   const per = (baris, id) => baris.filter((r) => String(r.karyawan_id) === String(id));
   const slip = [];
   let dilewati = 0;
@@ -131,7 +157,7 @@ async function hitungSemua(exec, periode) {
         if (!tarifPerProgram[p]) throw new Error(`Tarif ${p.toUpperCase()} belum diisi (berlaku sampai ${akhir}).`);
       }
       const komponen = rMaster.rows.map((m) => ({
-        kode: m.kode, nama: m.nama, jenis: m.jenis, masuk_dasar_bpjs: m.masuk_dasar_bpjs,
+        kode: m.kode, nama: m.nama, jenis: m.jenis, masuk_dasar_bpjs: m.masuk_dasar_bpjs, kena_pajak: m.kena_pajak,
         riwayat: per(rKomponen.rows, k.id).filter((r) => String(r.komponen_id) === String(m.id)),
       }));
       // Upah lembur: tiap pengajuan disetujui dihitung dari upah sebulan pada tanggal lembur (gaji pokok + tunjangan
@@ -157,7 +183,7 @@ async function hitungSemua(exec, periode) {
       }
       const hasil = hitungSlip({
         hariKerjaPeriode, karyawan: { tanggal_masuk: k.tanggal_masuk, tanggal_keluar: k.tanggal_keluar },
-        gajiPokok: per(rGaji.rows, k.id), komponen, lembur,
+        gajiPokok: per(rGaji.rows, k.id), komponen, lembur, pajak: ctxPajak ? pajak.susunMasukan(ctxPajak, k) : null,
         menitTerlambat: rekap.get(String(k.id)).ringkasan.menitTerlambat, tarifPerMenit: param.nilai,
         bpjs: program.map((p) => ({ program: p, ...tarifPerProgram[p] })),
         penyesuaian: per(rAdj.rows, k.id),
@@ -198,9 +224,11 @@ async function hitung(pengguna, id) {
       const k = s.karyawan; const h = s.hasil;
       const { rows } = await c.query(
         `INSERT INTO slip_gaji (periode_id, karyawan_id, nomor_induk, nama, jabatan, departemen, hari_kerja_periode, hari_kerja_bekerja,
-                                menit_terlambat, gaji_bruto, total_potongan, gaji_bersih, dihitung_oleh)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
-        [id, k.id, k.nomor_induk, k.nama, k.jabatan, k.departemen, h.hariKerjaPeriode, h.hariKerjaBekerja, s.menitTerlambat, h.bruto, h.potongan, h.bersih, pengguna.id]);
+                                menit_terlambat, gaji_bruto, total_potongan, gaji_bersih, dihitung_oleh,
+                                bruto_pajak, iuran_pengurang_pajak, pph21, metode_pajak)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`,
+        [id, k.id, k.nomor_induk, k.nama, k.jabatan, k.departemen, h.hariKerjaPeriode, h.hariKerjaBekerja, s.menitTerlambat, h.bruto, h.potongan, h.bersih, pengguna.id,
+          h.pajak ? h.pajak.bruto_pajak : '0', h.pajak ? h.pajak.iuran_pengurang_pajak : '0', h.pajak ? h.pajak.pph21 : '0', h.pajak ? h.pajak.metode : null]);
       for (const r of h.rincian) {
         await c.query(
           'INSERT INTO slip_gaji_rincian (slip_id, urutan, tipe, kode, nama, nominal, keterangan) VALUES ($1, $2, $3, $4, $5, $6, $7)',
@@ -356,6 +384,7 @@ async function detail(pengguna, id) {
     total: { bruto: total('gaji_bruto'), potongan: total('total_potongan'), bersih: total('gaji_bersih') },
     sudahBerakhir: (await hariIni(db)) > periode.tanggal_akhir, hariIni: await hariIni(db),
     adaPermintaan: !!periode.minta_buka_oleh,
+    pphAktif: pajak.aktifUntuk(await pajak.ambilMulai(db), periode.tahun, periode.bulan),
   };
 }
 

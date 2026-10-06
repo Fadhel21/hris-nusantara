@@ -9,6 +9,7 @@ const riwayat = require('./riwayat');
 const profil = require('./profil');
 const persetujuan = require('../../persetujuan/services/pengajuan');
 const gajiPengaturan = require('../../penggajian/services/pengaturan');
+const pajakSvc = require('../../penggajian/services/pajak');
 const dokumen = require('./dokumen');
 const { samarkan, formatNomorInduk } = require('./format');
 
@@ -83,6 +84,10 @@ async function detail(pengguna, id) {
     komponen: pengelola ? await gajiPengaturan.daftarKomponenKaryawan(id) : null,
     kepesertaan: pengelola ? await gajiPengaturan.kepesertaan(id) : null,
     komponenOpsi: pengelola ? await gajiPengaturan.daftarKomponenAktif() : null,
+    // Status pajak (PPh 21) dan saldo awal pajak: hanya admin/HR.
+    statusPajak: pengelola ? await pajakSvc.daftarStatus(id) : null,
+    saldoAwalPajak: pengelola ? await pajakSvc.daftarSaldoAwal(id) : null,
+    statusTersedia: pengelola ? await pajakSvc.daftarStatusTersedia() : null,
     akun: null,
   };
   if (hasil.bolehAkun) {

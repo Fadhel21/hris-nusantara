@@ -94,7 +94,7 @@ async function buatPdf(pengguna, slipId) {
         layout: 'lightHorizontalLines', margin: [0, 4, 0, 10],
       },
       ...(d.beban.length ? [{ text: 'Iuran ditanggung perusahaan (informasi, tidak mengurangi gaji)', style: 'bagian' }, tabelRincian(d.beban, '')] : []),
-      { text: 'Catatan: gaji bersih di atas belum memperhitungkan PPh 21.', italics: true, fontSize: 8, color: '#666666', margin: [0, 8, 0, 0] },
+      ...(s.metode_pajak ? [] : [{ text: 'Catatan: gaji bersih di atas belum memperhitungkan PPh 21.', italics: true, fontSize: 8, color: '#666666', margin: [0, 8, 0, 0] }]),
     ],
     styles: { judul: { fontSize: 16, bold: true, margin: [0, 0, 0, 4] }, bagian: { bold: true, margin: [0, 4, 0, 0] } },
   };

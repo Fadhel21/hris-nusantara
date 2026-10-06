@@ -99,3 +99,7 @@ input[type=month], input[type=time] { display:block; margin-top:.3rem; padding:.
 .info { color:#146c2e; background:#dcf5e4; border-radius:6px; padding:.5rem .75rem; }
 .info-catatan { background:#fff8e1; border:1px solid #f1deaa; color:#6b4e00; border-radius:6px; padding:.5rem .75rem; margin:0 0 1rem; }
 .tabel .aksi strong { font-weight:600; }
+.daftar-galat { margin:.25rem 0 .75rem; padding-left:1.2rem; color:var(--galat); font-size:.9rem; }
+.hasil-impor { margin-top:.5rem; }
+code { background:#eef1f5; border-radius:4px; padding:.05rem .3rem; font-size:.85em; }
+h3.sub { font-size:.85rem; color:var(--redup); text-transform:uppercase; letter-spacing:.04em; margin:1.25rem 0 .4rem; }

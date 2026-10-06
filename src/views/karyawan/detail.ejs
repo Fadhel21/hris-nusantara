@@ -38,6 +38,7 @@
     <% if (dokumen) { %><button type="button" :class="{ 'aktif': tab === 'dokumen' }" @click="tab = 'dokumen'">Dokumen</button><% } %>
     <% if (komponen) { %><button type="button" :class="{ 'aktif': tab === 'komponen' }" @click="tab = 'komponen'">Komponen gaji</button><% } %>
     <% if (kepesertaan) { %><button type="button" :class="{ 'aktif': tab === 'bpjs' }" @click="tab = 'bpjs'">BPJS</button><% } %>
+    <% if (statusPajak) { %><button type="button" :class="{ 'aktif': tab === 'pajak' }" @click="tab = 'pajak'">Pajak</button><% } %>
     <% if (bolehAkun) { %><button type="button" :class="{ 'aktif': tab === 'akun' }" @click="tab = 'akun'">Akun login</button><% } %>
     <% if (bolehKelola && k.status === 'aktif') { %><button type="button" :class="{ 'aktif': tab === 'keluar' }" @click="tab = 'keluar'">Keluar</button><% } %>
   </div>
@@ -282,6 +283,58 @@
       <% }) %>
       <button class="tombol" type="submit">Simpan kepesertaan</button>
     </form>
+  </section>
+  <% } %>
+
+  <% if (statusPajak) { %>
+  <section class="kartu" x-show="tab === 'pajak'" x-cloak x-transition.opacity>
+    <p>NPWP: <strong><%= k.npwp ? 'tercatat' : 'belum diisi' %></strong><% if (!k.npwp) { %> <span class="redup">(PPh 21 dikenai pengali tanpa NPWP sesuai parameter)</span><% } %></p>
+    <h3 class="sub">Status pajak (PTKP)</h3>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Berlaku sejak</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% if (!statusPajak.length) { %><tr><td colspan="3" class="kosong">Belum diisi. PPh 21 tidak dapat dihitung tanpa status pajak.</td></tr><% } %>
+        <% statusPajak.forEach(function (r) { %>
+          <tr><td><%= f.tanggal(r.tanggal_berlaku) %> <% if (r.berlaku) { %><span class="lencana lencana-ok">berlaku</span><% } %></td><td><%= r.kode_status %></td>
+            <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/karyawan/<%= k.id %>/status-pajak/<%= r.id %>/hapus" hx-confirm="Hapus riwayat status pajak ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td></tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% if (k.status === 'aktif') { %>
+    <details class="tambah"><summary>Tambah / ubah status pajak</summary>
+      <% if (!statusTersedia.length) { %><p class="redup">Tabel PTKP belum diimpor. Isi di menu Pajak (PPh 21).</p><% } else { %>
+      <form method="post" action="/karyawan/<%= k.id %>/status-pajak">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Status *<select name="kode_status" required><option value="">— pilih —</option><% statusTersedia.forEach(function (s) { %><option><%= s.kode %></option><% }) %></select></label>
+        <label>Berlaku sejak *<input type="date" name="tanggal_berlaku" required></label>
+        <button class="tombol" type="submit">Simpan</button>
+      </form>
+      <% } %>
+    </details>
+    <% } %>
+
+    <h3 class="sub">Saldo awal pajak</h3>
+    <p class="redup">Hanya perlu bila PPh 21 mulai dihitung di tengah tahun: penghasilan bruto, iuran pengurang, dan PPh 21 yang sudah dipotong dari Januari sampai bulan sebelum sistem ini menghitung.</p>
+    <div class="tabel-bungkus"><table class="tabel">
+      <thead><tr><th>Tahun</th><th>Sampai bulan</th><th>Bruto</th><th>Iuran pengurang</th><th>PPh 21 dipotong</th></tr></thead>
+      <tbody>
+        <% if (!saldoAwalPajak.length) { %><tr><td colspan="5" class="kosong">Tidak ada.</td></tr><% } %>
+        <% saldoAwalPajak.forEach(function (s) { %>
+          <tr><td><%= s.tahun %></td><td><%= s.sampai_bulan %></td><td><%= f.rupiah(s.bruto_ytd) %></td><td><%= f.rupiah(s.iuran_pengurang_ytd) %></td><td><%= f.rupiah(s.pph21_ytd) %></td></tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <details class="tambah"><summary>Isi / ganti saldo awal pajak</summary>
+      <form method="post" action="/karyawan/<%= k.id %>/saldo-awal-pajak">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Tahun *<input type="number" name="tahun" min="2000" max="2100" step="1" required></label>
+        <label>Sampai bulan ke- (1-11) *<input type="number" name="sampai_bulan" min="1" max="11" step="1" required></label>
+        <label>Penghasilan bruto (Rp) *<input type="text" name="bruto_ytd" inputmode="decimal" placeholder="0" required></label>
+        <label>Iuran pengurang (Rp) *<input type="text" name="iuran_pengurang_ytd" inputmode="decimal" placeholder="0" required></label>
+        <label>PPh 21 yang sudah dipotong (Rp) *<input type="text" name="pph21_ytd" inputmode="decimal" placeholder="0" required></label>
+        <button class="tombol" type="submit">Simpan</button>
+      </form>
+    </details>
   </section>
   <% } %>
 

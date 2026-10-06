@@ -32,6 +32,11 @@ router.post('/penggajian/periode/:id/putuskan-buka-kunci', butuhPeran('admin'), 
 router.post('/penggajian/periode/:id/penyesuaian', pengelola, ctl.tambahPenyesuaian);
 router.post('/penggajian/periode/:id/penyesuaian/:aid/hapus', pengelola, ctl.hapusPenyesuaian);
 
+router.get('/penggajian/pajak', pengelola, ctl.pajakHalaman);
+router.post('/penggajian/pajak/mulai', pengelola, ctl.aturMulaiPajak);
+router.post('/penggajian/pajak/impor/:jenis', pengelola, express.text({ type: ['text/csv', 'text/plain'], limit: '1mb' }), ctl.imporPajak);
+router.post('/penggajian/pajak/set/:jenis/:tanggal/hapus', pengelola, ctl.hapusSetPajak);
+
 router.get('/penggajian/pengaturan', pengelola, ctl.halamanPengaturan);
 router.post('/penggajian/pengaturan/tarif-bpjs', pengelola, ctl.tambahTarif);
 router.post('/penggajian/pengaturan/tarif-bpjs/:id/hapus', pengelola, ctl.hapusTarif);

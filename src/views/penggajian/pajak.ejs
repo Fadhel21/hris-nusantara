@@ -1,0 +1,70 @@
+<%- include('../partials/atas', { judul: 'Pajak (PPh 21)' }) %>
+<div class="judul-halaman"><h1>Pajak (PPh 21)</h1></div>
+<% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+<p class="info-catatan">Tidak ada tarif atau PTKP bawaan: semua tabel Anda isi dari sumber resmi lewat impor CSV. Metode: <strong>TER bulanan</strong>, dan pada <strong>masa pajak terakhir</strong> (Desember atau bulan karyawan keluar) dihitung ulang setahun dengan lapisan progresif; PTKP proporsional bulan bekerja; pembulatan PPh ke rupiah terdekat; kelebihan potong dikembalikan lewat slip.</p>
+
+<section class="kartu blok">
+  <h2>1. Aktivasi</h2>
+  <p>Status: <% if (ringkasan.mulai) { %><strong>aktif mulai periode <%= ringkasan.mulai %></strong><% } else { %><strong>belum aktif</strong> (gaji bersih belum memperhitungkan PPh 21)<% } %>.</p>
+  <form method="post" action="/penggajian/pajak/mulai" class="form-lebar">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Mulai periode (bulan)<input type="month" name="mulai" value="<%= ringkasan.mulai %>"></label>
+    <p class="redup">Kosongkan untuk menonaktifkan. Tidak dapat dimulai pada/sebelum periode yang sudah dikunci. Bila Anda mulai di tengah tahun, isi <strong>saldo awal pajak</strong> tiap karyawan (tab Pajak pada data karyawan) untuk bulan-bulan sebelumnya.</p>
+    <button class="tombol" type="submit">Simpan</button>
+  </form>
+</section>
+
+<% var tabel = [
+  { jenis: 'ptkp', judul: '2. Tabel PTKP', kolom: 'kode,ptkp_tahunan,kategori_ter,tanggal_berlaku', data: ringkasan.ptkp },
+  { jenis: 'ter', judul: '3. Tabel TER', kolom: 'kategori,batas_bawah,batas_atas,tarif,tanggal_berlaku', data: ringkasan.ter },
+  { jenis: 'lapisan', judul: '4. Lapisan tarif PPh 21 (progresif)', kolom: 'batas_bawah,batas_atas,tarif,tanggal_berlaku', data: ringkasan.lapisan }
+]; %>
+<% tabel.forEach(function (t) { %>
+<section class="kartu blok">
+  <h2><%= t.judul %></h2>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Berlaku sejak</th><% if (t.jenis === 'ter') { %><th>Kategori</th><% } %><th>Jumlah baris</th><th></th></tr></thead>
+    <tbody>
+      <% if (!t.data.length) { %><tr><td colspan="4" class="kosong">Belum diisi.</td></tr><% } %>
+      <% t.data.forEach(function (d) { %>
+        <tr>
+          <td><%= fmt.tanggal(d.tanggal_berlaku) %></td><% if (t.jenis === 'ter') { %><td><%= d.kategori %></td><% } %><td><%= d.jumlah %></td>
+          <td class="aksi">
+            <form method="post" action="/penggajian/pajak/set/<%= t.jenis %>/<%= d.tanggal_berlaku %>/hapus<%= t.jenis === 'ter' ? '?kategori=' + d.kategori : '' %>" x-data style="display:inline">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="tautan-bahaya" @click="if (!confirm('Hapus seluruh set ini?')) $event.preventDefault()">Hapus set</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+  <details class="tambah"><summary>Impor CSV</summary>
+    <div data-impor="<%= t.jenis %>" class="form-lebar">
+      <p class="redup">Baris pertama harus judul kolom persis: <code><%= t.kolom %></code>. Pemisah koma atau titik koma; angka tanpa pemisah ribuan (titik = desimal); tanggal <code>YYYY-MM-DD</code>; kosongkan <code>batas_atas</code> pada baris terakhir.</p>
+      <label>Berkas CSV<input type="file" accept=".csv,text/csv,text/plain"></label>
+      <div class="baris-tombol">
+        <button type="button" class="tombol tombol-sekunder" data-periksa>Periksa</button>
+        <button type="button" class="tombol" data-simpan hidden>Simpan ke database</button>
+      </div>
+      <div data-hasil class="hasil-impor"></div>
+    </div>
+  </details>
+</section>
+<% }) %>
+
+<section class="kartu blok">
+  <h2>5. Parameter PPh 21</h2>
+  <p class="redup">Diisi di <a href="/penggajian/pengaturan">Pengaturan penggajian</a> (bagian Parameter): biaya jabatan (persen dan maksimum per bulan), pembulatan PKP, dan pengali tanpa NPWP. Tanda “kena pajak” pada komponen gaji diatur di menu Komponen gaji; tanda BPJS perusahaan/iuran pengurang diatur saat mengisi tarif BPJS.</p>
+  <% var kunciPajak = ['biaya_jabatan_persen', 'biaya_jabatan_maks_per_bulan', 'pembulatan_pkp', 'pengali_tanpa_npwp']; %>
+  <div class="tabel-bungkus"><table class="tabel">
+    <thead><tr><th>Parameter</th><th>Berlaku sejak</th><th>Nilai</th></tr></thead>
+    <tbody>
+      <% var ada = parameter.filter(function (p) { return kunciPajak.indexOf(p.kunci) >= 0; }); %>
+      <% if (!ada.length) { %><tr><td colspan="3" class="kosong">Belum diisi.</td></tr><% } %>
+      <% ada.forEach(function (p) { %><tr><td><%= parameterDef[p.kunci].label %></td><td><%= fmt.tanggal(p.tanggal_berlaku) %></td><td><%= String(Number(p.nilai)) %></td></tr><% }) %>
+    </tbody>
+  </table></div>
+</section>
+<script src="/js/impor.js" defer></script>
+<%- include('../partials/bawah') %>

@@ -74,13 +74,14 @@
   <h2>Tarif BPJS</h2>
   <p class="redup">Tarif dalam persen (maks. 4 desimal). Batas upah atas bersifat opsional (kosong = tanpa batas). Hanya karyawan yang dicentang di tab BPJS pada data karyawan yang dipotong.</p>
   <div class="tabel-bungkus"><table class="tabel">
-    <thead><tr><th>Program</th><th>Berlaku sejak</th><th>Karyawan (%)</th><th>Perusahaan (%)</th><th>Batas upah atas</th><th></th></tr></thead>
+    <thead><tr><th>Program</th><th>Berlaku sejak</th><th>Karyawan (%)</th><th>Perusahaan (%)</th><th>Batas upah atas</th><th>Pajak</th><th></th></tr></thead>
     <tbody>
-      <% if (!tarif.length) { %><tr><td colspan="6" class="kosong">Belum ada tarif BPJS.</td></tr><% } %>
+      <% if (!tarif.length) { %><tr><td colspan="7" class="kosong">Belum ada tarif BPJS.</td></tr><% } %>
       <% tarif.forEach(function (t) { %>
         <tr>
           <td><%= namaProgram[t.program] %></td><td><%= fmt.tanggal(t.tanggal_berlaku) %></td>
           <td><%= t.tarif_karyawan %></td><td><%= t.tarif_perusahaan %></td><td><%= t.batas_upah_atas ? fmt.rupiah(t.batas_upah_atas) : 'tanpa batas' %></td>
+          <td class="redup"><%= t.perusahaan_kena_pajak ? 'perusahaan = bruto' : '' %><%= t.perusahaan_kena_pajak && t.iuran_karyawan_pengurang_pajak ? '; ' : '' %><%= t.iuran_karyawan_pengurang_pajak ? 'iuran = pengurang' : '' %></td>
           <td class="aksi"><button type="button" class="tautan-bahaya" hx-post="/penggajian/pengaturan/tarif-bpjs/<%= t.id %>/hapus" hx-confirm="Hapus tarif ini?" hx-target="closest tr" hx-swap="outerHTML swap:.2s">Hapus</button></td>
         </tr>
       <% }) %>
@@ -94,6 +95,9 @@
       <label>Tarif karyawan (%) *<input type="text" name="tarif_karyawan" inputmode="decimal" placeholder="mis. 1 atau 0.2400" required></label>
       <label>Tarif perusahaan (%) *<input type="text" name="tarif_perusahaan" inputmode="decimal" placeholder="mis. 4 atau 0" required></label>
       <label>Batas upah atas (Rp)<input type="text" name="batas_upah_atas" inputmode="decimal" placeholder="kosongkan bila tanpa batas"></label>
+      <label class="centang"><input type="checkbox" name="perusahaan_kena_pajak" value="1"> Bagian perusahaan termasuk penghasilan bruto PPh 21</label>
+      <label class="centang"><input type="checkbox" name="iuran_karyawan_pengurang_pajak" value="1"> Iuran karyawan menjadi pengurang penghasilan (PPh 21)</label>
+      <p class="redup">Kedua tanda ini hanya dipakai bila PPh 21 diaktifkan. Tentukan sesuai ketentuan yang berlaku bagi Anda.</p>
       <button class="tombol" type="submit">Simpan</button>
     </form>
   </details>

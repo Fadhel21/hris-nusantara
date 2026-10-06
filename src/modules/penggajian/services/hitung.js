@@ -10,6 +10,7 @@
 // Asumsi yang perlu dikonfirmasi pemilik: pembulatan ke sen (tanpa pembulatan rupiah); BPJS atas dasar penghasilan
 // yang diterima (bukan penuh sebulan); ketidakhadiran tidak memotong gaji.
 const uang = require('./uang');
+const { hitungPph21 } = require('./pph21');
 
 const NAMA_PROGRAM = {
   kesehatan: 'BPJS Kesehatan', jht: 'BPJS JHT', jp: 'BPJS JP', jkk: 'BPJS JKK', jkm: 'BPJS JKM',
@@ -104,12 +105,40 @@ function hitungSlip(masukan) {
   }
   for (const b of beban) tambah('beban_perusahaan', `BPJS_${b.program.toUpperCase()}_PRS`, `${NAMA_PROGRAM[b.program]} (perusahaan)`, b.sen, b.ket);
 
+  // PPh 21 (hanya bila sudah diaktifkan untuk periode ini): dasar = penghasilan bruto yang kena pajak.
+  let pajak = null;
+  if (masukan.pajak) {
+    const mp = masukan.pajak;
+    let brutoPajak = gajiPokok;
+    for (const t of tunjangan) if (t.k.kena_pajak !== false) brutoPajak += t.sen;
+    if (masukan.lembur) brutoPajak += uang.keSen(masukan.lembur.nominal);
+    for (const p of masukan.penyesuaian.filter((x) => x.jenis === 'pendapatan')) brutoPajak += uang.keSen(p.nominal);
+    let iuranPengurang = 0n;
+    for (const b of programBpjs) {
+      const batas = b.batas_upah_atas === null || b.batas_upah_atas === undefined ? null : uang.keSen(b.batas_upah_atas);
+      const dasar = batas !== null && dasarBpjs > batas ? batas : dasarBpjs;
+      if (b.perusahaan_kena_pajak) brutoPajak += uang.persen(dasar, b.tarif_perusahaan);
+      if (b.iuran_karyawan_pengurang_pajak) iuranPengurang += uang.persen(dasar, b.tarif_karyawan);
+    }
+    const r = hitungPph21({
+      brutoPajak, iuranPengurang, kategori: mp.kategori, ter: mp.ter, tanpaNpwp: mp.tanpaNpwp,
+      pengaliTanpaNpwp: mp.pengaliTanpaNpwp, masaAkhir: mp.masaAkhir,
+    });
+    if (r.pph > 0n) tambah('potongan', 'PPH21', 'PPh 21', r.pph, r.keterangan);
+    else if (r.pph < 0n) tambah('pendapatan', 'PPH21_LEBIH', 'Pengembalian kelebihan PPh 21', -r.pph, r.keterangan);
+    pajak = { brutoPajak, iuranPengurang, pph: r.pph, metode: r.metode };
+  }
+
   const bruto = uang.jumlah(rincian.filter((r) => r.tipe === 'pendapatan').map((r) => r.nominal));
   const potongan = uang.jumlah(rincian.filter((r) => r.tipe === 'potongan').map((r) => r.nominal));
   if (potongan > bruto) {
     throw new Error(`Total potongan (Rp ${uang.dariSen(potongan)}) melebihi pendapatan (Rp ${uang.dariSen(bruto)}).`);
   }
   return {
+    pajak: pajak && {
+      bruto_pajak: uang.dariSen(pajak.brutoPajak), iuran_pengurang_pajak: uang.dariSen(pajak.iuranPengurang),
+      pph21: pajak.pph < 0n ? `-${uang.dariSen(-pajak.pph)}` : uang.dariSen(pajak.pph), metode: pajak.metode,
+    },
     hariKerjaPeriode: total,
     hariKerjaBekerja: hariBekerja.length,
     bruto: uang.dariSen(bruto),

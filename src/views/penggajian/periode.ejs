@@ -9,7 +9,11 @@
 </div>
 <% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
 <% if (pesan) { %><p class="info" role="status"><%= pesan %></p><% } %>
-<p class="info-catatan"><strong>Gaji bersih belum memperhitungkan PPh 21 dan lembur</strong> (menyusul). Slip karyawan baru terlihat oleh karyawan setelah periode dikunci.</p>
+<% if (pphAktif) { %>
+  <p class="info-catatan">PPh 21 dihitung pada periode ini (TER bulanan; masa pajak terakhir dihitung ulang setahun). Slip karyawan baru terlihat oleh karyawan setelah periode dikunci.</p>
+<% } else { %>
+  <p class="info-catatan"><strong>Gaji bersih belum memperhitungkan PPh 21</strong> (belum diaktifkan untuk periode ini; atur di menu Pajak). Slip karyawan baru terlihat oleh karyawan setelah periode dikunci.</p>
+<% } %>
 
 <section class="kartu blok">
   <h2>Ringkasan</h2>
