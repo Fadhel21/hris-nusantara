@@ -22,7 +22,7 @@
 }
 .lewati:focus { top: var(--ruang-3); }
 
-/* ---------- Tata letak: ikon 3D di kiri | formulir (+ akun demo di bawahnya) di kanan ---------- */
+/* ---------- Tata letak: ilustrasi ikon di kiri | formulir (+ akun demo di bawahnya) di kanan ---------- */
 .masuk {
   min-height: 100vh;
   min-height: 100dvh;
@@ -113,7 +113,7 @@
 .demo-ket code { font-family: var(--font-mono); padding: .05rem .35rem; background: var(--abu-100); border-radius: 4px; color: var(--warna-teks); user-select: all; }
 .status-demo { min-height: 1.3em; margin: var(--ruang-1) 0 0; font-size: .8rem; font-weight: 600; color: var(--warna-sukses); }
 
-/* ---------- Ikon 3D (CSS murni) ---------- */
+/* ---------- Ilustrasi ikon HRIS (SVG + CSS murni) ---------- */
 .masuk-visual {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: var(--ruang-5); padding: var(--ruang-6) var(--ruang-5); overflow: hidden; isolation: isolate; color: #fff;
@@ -130,38 +130,33 @@
   background-size: 44px 44px;
   mask-image: radial-gradient(70% 70% at 50% 45%, #000, transparent 75%);
 }
-.panggung { display: flex; flex-direction: column; align-items: center; }
-.adegan { --u: clamp(150px, 17vw, 240px); width: var(--u); height: var(--u); perspective: 1100px; }
-.miring {
-  width: 100%; height: 100%; transform-style: preserve-3d;
-  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform var(--durasi-normal) var(--ease-masuk);
+.panggung { --u: clamp(150px, 15vw, 210px); position: relative; width: calc(var(--u) * 2); height: calc(var(--u) * 1.7); }
+.lingkar {
+  position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 1.75); height: calc(var(--u) * 1.75); transform: translate(-50%, -50%);
+  border: 1px dashed rgba(255, 255, 255, .22); border-radius: 50%;
 }
-.kubus { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; animation: putar-kubus 26s linear infinite; will-change: transform; }
-/* Sisi buram + backface-visibility:hidden agar ikon sisi belakang tidak tembus. Warna tiap sisi berbeda
-   untuk memberi kesan pencahayaan tanpa menganimasikan apa pun selain rotasi kubus. */
-.sisi {
-  position: absolute; inset: 0; display: grid; place-items: center;
-  border-radius: 12%; border: 1px solid rgba(255, 255, 255, .38);
-  backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  background: linear-gradient(145deg, #2f63c9, #17387f);
-  box-shadow: inset 0 0 36px rgba(255, 255, 255, .16);
+.pusat {
+  position: absolute; left: 50%; top: 50%; width: var(--u); height: var(--u); display: grid; place-items: center;
+  transform: translate(-50%, -50%); border-radius: 28%;
+  background: linear-gradient(145deg, #4b95ff, #2158c9);
+  border: 1px solid rgba(255, 255, 255, .4);
+  box-shadow: 0 24px 48px rgba(3, 10, 30, .45), inset 0 0 32px rgba(255, 255, 255, .18);
+  animation: melayang 7s ease-in-out infinite;
 }
-.sisi svg {
-  width: 46%; height: 46%; fill: none; stroke: #fff; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .35));
+.pusat svg { width: 52%; height: 52%; fill: none; stroke: #fff; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.chip {
+  position: absolute; display: flex; align-items: center; gap: .5rem; padding: .5rem .85rem .5rem .6rem;
+  font-size: .85rem; font-weight: 700; color: #fff; white-space: nowrap;
+  background: rgba(255, 255, 255, .13); border: 1px solid rgba(255, 255, 255, .28); border-radius: var(--radius-bulat);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 10px 24px rgba(3, 10, 30, .3);
+  animation: melayang 6s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -1.4s);
 }
-.s-depan    { transform: translateZ(calc(var(--u) / 2)); background: linear-gradient(145deg, #4b95ff, #2158c9); }
-.s-belakang { transform: rotateY(180deg) translateZ(calc(var(--u) / 2)); background: linear-gradient(145deg, #3d7be3, #1b3f94); }
-.s-kanan    { transform: rotateY(90deg) translateZ(calc(var(--u) / 2)); background: linear-gradient(145deg, #2fc9ad, #11705f); }
-.s-kiri     { transform: rotateY(-90deg) translateZ(calc(var(--u) / 2)); background: linear-gradient(145deg, #9a7ff5, #4a31a6); }
-.s-atas     { transform: rotateX(90deg) translateZ(calc(var(--u) / 2)); background: linear-gradient(145deg, #6aa8ff, #2b5fcb); }
-.s-bawah    { transform: rotateX(-90deg) translateZ(calc(var(--u) / 2)); background: linear-gradient(145deg, #1d377a, #0e1f48); }
-.bayangan-lantai {
-  width: calc(var(--u, 150px) * 1.2); height: 22px; margin-top: calc(var(--u, 150px) * .32); border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0, 0, 0, .5), transparent);
-  animation: napas 6.5s ease-in-out infinite;
-}
+.chip svg { width: 22px; height: 22px; padding: 4px; box-sizing: content-box; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; border-radius: 50%; }
+.c-jam { left: 2%; top: 14%; }      .c-jam svg { background: #2f63c9; }
+.c-kalender { right: 0; top: 22%; } .c-kalender svg { background: #7a5ee0; }
+.c-uang { left: 0; bottom: 14%; }   .c-uang svg { background: #14937c; }
+.c-perisai { right: 4%; bottom: 8%; } .c-perisai svg { background: #c26a12; }
 .teks-visual { text-align: center; max-width: 26rem; }
 .slogan { margin: 0 0 var(--ruang-4); font-size: clamp(1.15rem, .95rem + .8vw, 1.6rem); font-weight: 700; line-height: 1.3; }
 .lencana-fitur { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ruang-2); margin: 0; padding: 0; list-style: none; }
@@ -173,20 +168,22 @@
 /* ---------- Animasi ---------- */
 .muncul { animation: muncul var(--durasi-lambat) var(--ease-masuk) both; animation-delay: calc(var(--i, 0) * 70ms); }
 @keyframes muncul { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-@keyframes putar-kubus { from { transform: rotateX(-22deg) rotateY(0deg); } to { transform: rotateX(-22deg) rotateY(360deg); } }
-@keyframes napas { 50% { transform: scale(.8); opacity: .65; } }
+@keyframes melayang { 50% { translate: 0 -10px; } }
 @keyframes putar-kecil { to { transform: rotate(360deg); } }
 
 /* ---------- Responsif ---------- */
 @media (max-width: 1099px) {
   .masuk { grid-template-columns: minmax(0, 1fr) minmax(21rem, 26rem); }
-  .adegan { --u: clamp(130px, 19vw, 190px); }
+  .panggung { --u: clamp(130px, 17vw, 170px); }
 }
 @media (max-width: 759px) {
   .masuk { grid-template-columns: 1fr; grid-template-rows: auto 1fr; grid-template-areas: "visual" "kanan"; }
   .masuk-visual { flex-direction: row; gap: var(--ruang-5); padding: var(--ruang-6) var(--ruang-4); }
-  .adegan { --u: 84px; }
-  .bayangan-lantai { margin-top: 30px; width: 100px; }
+  .panggung { --u: 78px; width: 230px; height: 150px; }
+  .chip { font-size: .75rem; padding: .3rem .6rem .3rem .4rem; }
+  .chip svg { width: 16px; height: 16px; }
+  .c-jam { left: 0; top: 2%; } .c-kalender { right: -14%; top: 8%; } .c-uang { left: 0; bottom: 2%; } .c-perisai { right: -10%; bottom: 2%; }
+  .masuk-visual { overflow: visible; } .panggung { margin-right: var(--ruang-4); }
   .teks-visual { text-align: left; }
   .lencana-fitur { justify-content: flex-start; }
   .masuk-kanan { padding: var(--ruang-5) var(--ruang-4); justify-content: flex-start; }
@@ -199,8 +196,7 @@
 
 /* ---------- Pengguna yang mengurangi gerak ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .kubus { animation: none; transform: rotateX(-22deg) rotateY(-32deg); will-change: auto; }
-  .bayangan-lantai { animation: none; }
+  .pusat, .chip { animation: none; }
   .muncul { animation: none; }
   .tombol-masuk[aria-busy="true"] .putar { animation-duration: 2s; }
   * { transition-duration: .01ms !important; }

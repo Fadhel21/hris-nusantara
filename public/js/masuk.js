@@ -1,5 +1,4 @@
-// Halaman masuk: state formulir (Alpine) dan miring ikon 3D mengikuti penunjuk.
-// Tanpa library animasi; hanya mengubah transform. Dinonaktifkan bila pengguna memilih prefers-reduced-motion.
+// Halaman masuk: state formulir (Alpine).
 document.addEventListener('alpine:init', function () {
   Alpine.data('masuk', function () {
     return {
@@ -27,28 +26,3 @@ document.addEventListener('alpine:init', function () {
     };
   });
 });
-
-(function () {
-  var kurangiGerak = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var penunjukHalus = window.matchMedia('(pointer: fine)').matches;
-  var visual = document.querySelector('.masuk-visual');
-  var miring = document.querySelector('.miring');
-  if (!visual || !miring || kurangiGerak || !penunjukHalus) return;
-
-  var bingkai = null;
-  visual.addEventListener('pointermove', function (e) {
-    var r = visual.getBoundingClientRect();
-    var x = (e.clientX - r.left) / r.width - 0.5;
-    var y = (e.clientY - r.top) / r.height - 0.5;
-    if (bingkai) cancelAnimationFrame(bingkai);
-    bingkai = requestAnimationFrame(function () {
-      miring.style.setProperty('--ry', (x * 22).toFixed(1) + 'deg');
-      miring.style.setProperty('--rx', (-y * 16).toFixed(1) + 'deg');
-    });
-  });
-  visual.addEventListener('pointerleave', function () {
-    if (bingkai) cancelAnimationFrame(bingkai);
-    miring.style.setProperty('--ry', '0deg');
-    miring.style.setProperty('--rx', '0deg');
-  });
-})();
