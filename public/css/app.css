@@ -421,7 +421,8 @@ a.kartu-stat:hover { color: inherit; transform: translateY(-2px); border-color: 
   font: inherit; font-size: var(--teks-s); font-weight: 600; color: var(--warna-teks-redup); background: transparent; border: 0; border-radius: var(--radius-bulat); cursor: pointer;
   transition: background-color var(--durasi-cepat) var(--ease-masuk), color var(--durasi-cepat) var(--ease-masuk), box-shadow var(--durasi-cepat) var(--ease-masuk);
 }
-.pengalih-mode button:hover { color: var(--warna-teks); }
+.pengalih-mode button:disabled { opacity: .55; cursor: not-allowed; }
+.pengalih-mode button:hover:not(:disabled) { color: var(--warna-teks); }
 .pengalih-mode button.aktif { color: var(--warna-utama-di-lembut); background: var(--warna-permukaan); box-shadow: var(--bayangan-1); }
 @media (max-width: 640px) { .pengalih-mode button span { display: none; } .pengalih-mode button { padding: 0 var(--ruang-3); min-width: 44px; justify-content: center; } }
 

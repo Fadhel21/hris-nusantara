@@ -31,11 +31,11 @@
       <p class="bilah-judul"><%= typeof judul !== 'undefined' ? judul : 'HRIS' %></p>
       <span class="spasi"></span>
 
-      <% if (bisaGantiMode) { %>
+      <% if (pengguna.peran !== 'karyawan') { %>
       <form class="pengalih-mode" method="post" action="/mode" role="group" aria-label="Mode tampilan">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" name="mode" value="kerja" class="<%= modeKaryawan ? '' : 'aktif' %>" <%- modeKaryawan ? '' : 'aria-pressed="true"' %>><%- ikon('organisasi', 16) %><span><%= labelPeran[pengguna.peran] || 'Kerja' %></span></button>
-        <button type="submit" name="mode" value="karyawan" class="<%= modeKaryawan ? 'aktif' : '' %>" <%- modeKaryawan ? 'aria-pressed="true"' : '' %>><%- ikon('profil', 16) %><span>Karyawan</span></button>
+        <button type="submit" name="mode" value="karyawan" class="<%= modeKaryawan ? 'aktif' : '' %>" <%- modeKaryawan ? 'aria-pressed="true"' : '' %> <%- bisaGantiMode ? '' : 'disabled title="Akun ini belum tertaut ke data karyawan, jadi Mode Karyawan belum tersedia."' %>><%- ikon('profil', 16) %><span>Karyawan</span></button>
       </form>
       <% } %>
 
