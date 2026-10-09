@@ -1,18 +1,122 @@
 <%- include('../partials/atas', { judul: 'Beranda' }) %>
-<section class="sorotan">
-  <div>
-    <h1><%= sapaan %>, <%= nama %></h1>
-    <ul class="sorotan-info">
-      <li><%- ikon('profil', 16) %><%= peran %><%= modeKaryawan ? ' · Mode Karyawan' : '' %></li>
-      <li><%- ikon('kalender', 16) %><%= fmt.hari(tanggal) %>, <%= fmt.tanggal(tanggal) %></li>
-    </ul>
-  </div>
-  <% if (aksiUtama) { %><a class="tombol" href="<%= aksiUtama.href %>"><%- ikon(aksiUtama.ikon, 20) %> <%= aksiUtama.label %></a><% } %>
-</section>
+<%
+  var ringkasanKartu = kartu.filter(function (k) { return k.kunci !== 'absen' && k.kunci !== 'inbox'; });
+  var adaTugas = jumlahTugas > 0;
+  var inisial = (nama || '?').trim().charAt(0).toUpperCase();
+%>
+<div class="bd-atas">
 
-<% if (kartu.length) { %>
-<section class="statistik" aria-label="Ringkasan">
-  <% kartu.forEach(function (k) { %>
+  <%# ===== Kartu profil + absensi (gaya "live attendance") ===== %>
+  <section class="bd-absen" aria-label="Absensi hari ini">
+    <div class="bd-absen-kepala">
+      <span class="bd-avatar" aria-hidden="true"><%= inisial %></span>
+      <div class="bd-profil">
+        <p class="bd-sapaan"><%= sapaan %>,</p>
+        <h1><%= nama %></h1>
+        <p class="bd-jabatan">
+          <% if (profil && profil.jabatan) { %><%= profil.jabatan %><%= profil.departemen ? ' · ' + profil.departemen : '' %><% } else { %><%= peran %><%= modeKaryawan ? ' · Mode Karyawan' : '' %><% } %>
+        </p>
+        <% if (profil && profil.nomor_induk) { %><p class="bd-nik"><%- ikon('profil', 14) %> <%= profil.nomor_induk %><%= profil.cabang ? ' · ' + profil.cabang : '' %></p><% } %>
+      </div>
+      <div class="bd-jam-blok">
+        <p class="bd-jam" data-jam data-zona="Asia/Jakarta" aria-label="Jam saat ini" aria-live="off">--:--:--</p>
+        <p class="bd-tanggal"><%= fmt.hari(tanggal) %>, <%= fmt.tanggal(tanggal) %></p>
+      </div>
+    </div>
+
+    <% if (punyaKaryawan && absenRingkas && absenRingkas.adaPenempatan) { %>
+      <div class="bd-absen-isi">
+        <dl class="bd-status">
+          <div><dt>Jadwal</dt><dd><%= jadwal ? jadwal.masuk + ' – ' + jadwal.pulang : '—' %></dd></div>
+          <div class="<%= absenRingkas.masuk ? 'selesai' : '' %>"><dt>Tap In</dt><dd><%= absenRingkas.masuk || '--:--' %></dd></div>
+          <div class="<%= absenRingkas.pulang ? 'selesai' : '' %>"><dt>Tap Out</dt><dd><%= absenRingkas.pulang || '--:--' %></dd></div>
+        </dl>
+        <div class="bd-aksi">
+          <% if (!absenRingkas.masuk) { %>
+            <a class="tombol bd-tombol" href="/absensi"><%- ikon('tapin', 20) %> Tap In</a>
+          <% } else if (!absenRingkas.pulang) { %>
+            <a class="tombol bd-tombol bd-keluar" href="/absensi"><%- ikon('tapout', 20) %> Tap Out</a>
+          <% } else { %>
+            <a class="tombol tombol-sekunder bd-tombol" href="/absensi"><%- ikon('perisai', 20) %> Absen hari ini lengkap</a>
+          <% } %>
+        </div>
+      </div>
+    <% } else if (punyaKaryawan) { %>
+      <div class="bd-absen-isi"><p class="bd-catatan">Penempatan cabang Anda belum diatur, sehingga belum bisa absen. Hubungi HR.</p></div>
+    <% } else { %>
+      <div class="bd-absen-isi">
+        <p class="bd-catatan">Akun ini belum tertaut ke data karyawan, jadi Tap In/Tap Out belum tersedia.</p>
+        <% if (pengguna.peran === 'admin') { %><a class="tombol tombol-sekunder" href="/akun/tautan"><%- ikon('profil', 18) %> Tautkan akun saya</a><% } %>
+      </div>
+    <% } %>
+  </section>
+
+  <%# ===== Perlu tindakan ===== %>
+  <section class="bd-kartu bd-tugas" aria-labelledby="judul-tugas">
+    <div class="bd-kartu-kepala">
+      <h2 id="judul-tugas"><%- ikon('persetujuan', 20) %> Perlu persetujuan</h2>
+      <% if (adaTugas) { %><span class="bd-hitung"><%= jumlahTugas %></span><% } %>
+    </div>
+    <% if (adaTugas) { %>
+      <ul class="bd-daftar-tugas">
+        <% tugas.forEach(function (t) { %>
+          <li><a href="/pengajuan/<%= t.id %>">
+            <span class="bd-avatar-kecil" aria-hidden="true"><%= t.inisial %></span>
+            <span class="bd-tugas-teks"><strong><%= t.nama %></strong><small><%= t.jenis %> · <%= fmt.tanggal(t.tanggal) %></small></span>
+            <span class="bd-panah"><%- ikon('panah', 16) %></span>
+          </a></li>
+        <% }) %>
+      </ul>
+      <% if (jumlahTugas > tugas.length) { %><a class="bd-semua" href="/persetujuan">Lihat semua (<%= jumlahTugas %>)</a><% } %>
+    <% } else { %>
+      <div class="bd-kosong"><span><%- ikon('persetujuan', 28) %></span><p>Tidak ada yang perlu disetujui.</p></div>
+    <% } %>
+  </section>
+</div>
+
+<%# ===== Menu (gaya Talenta: ikon berlatar lembut, bisa disaring per kelompok) ===== %>
+<% if (grupMenu.length) { %>
+<section class="bd-kartu bd-menu" aria-labelledby="judul-semua-menu" x-data="{ f: 'semua' }">
+  <div class="bd-kartu-kepala">
+    <h2 id="judul-semua-menu"><%- ikon('departemen', 20) %> Menu</h2>
+    <div class="bd-saring" role="tablist" aria-label="Saring menu">
+      <button type="button" role="tab" :aria-selected="(f === 'semua').toString()" :class="{ 'aktif': f === 'semua' }" @click="f = 'semua'">Semua</button>
+      <% grupMenu.forEach(function (g) { %>
+        <button type="button" role="tab" :aria-selected="(f === '<%= g.slug %>').toString()" :class="{ 'aktif': f === '<%= g.slug %>' }" @click="f = '<%= g.slug %>'"><%= g.nama %></button>
+      <% }) %>
+    </div>
+  </div>
+  <ul class="bd-ubin">
+    <% grupMenu.forEach(function (g) { g.item.forEach(function (m) { %>
+      <li class="grup-<%= g.slug %>" x-show="f === 'semua' || f === '<%= g.slug %>'" x-transition.opacity.duration.150ms>
+        <a class="bd-ubin-tautan" href="<%= m.href %>">
+          <span class="bd-ubin-ikon"><%- ikon(m.ikon, 24) %></span>
+          <span class="bd-ubin-label"><%= m.label %></span>
+        </a>
+      </li>
+    <% }) }) %>
+  </ul>
+</section>
+<% } %>
+
+<%# ===== Ringkasan ===== %>
+<% if (kehadiran || ringkasanKartu.length) { %>
+<section class="bd-ringkasan" aria-label="Ringkasan">
+  <% if (kehadiran) { %>
+  <div class="bd-kartu bd-hadir">
+    <div class="bd-kartu-kepala"><h2><%- ikon('grafik', 20) %> Kehadiran hari ini</h2></div>
+    <div class="bd-hadir-isi">
+      <div class="bd-cincin" style="--p: <%= kehadiran.persen %>" role="img" aria-label="<%= kehadiran.persen %> persen hadir"><span><%= kehadiran.persen %>%</span></div>
+      <ul class="bd-legenda">
+        <li><i class="t-hadir"></i>Hadir <strong><%= kehadiran.hadir %></strong></li>
+        <li><i class="t-cuti"></i>Cuti/izin <strong><%= kehadiran.cuti %></strong></li>
+        <li><i class="t-belum"></i>Belum absen <strong><%= kehadiran.belum %></strong></li>
+        <li class="bd-total">Total karyawan aktif <strong><%= kehadiran.total %></strong></li>
+      </ul>
+    </div>
+  </div>
+  <% } %>
+  <% ringkasanKartu.forEach(function (k) { %>
     <a class="kartu-stat <%= k.nada ? 'nada-' + k.nada : '' %>" href="<%= k.href %>">
       <span class="stat-ikon"><%- ikon(k.ikon, 22) %></span>
       <span class="stat-label"><%= k.label %></span>
@@ -22,27 +126,5 @@
   <% }) %>
 </section>
 <% } %>
-
-<% if (grupMenu.length) { %>
-<section class="semua-menu" aria-labelledby="judul-semua-menu">
-  <h2 id="judul-semua-menu" class="judul-bagian">Semua menu</h2>
-  <div class="menu-kisi">
-    <% grupMenu.forEach(function (g) { %>
-      <div class="grup-ubin grup-<%= g.slug %>">
-        <h3 class="grup-ubin-judul"><span class="nav-ikon"><%- ikon(g.ikon, 18) %></span><%= g.nama %><span class="jumlah"><%= g.item.length %></span></h3>
-        <ul class="ubin-daftar">
-          <% g.item.forEach(function (m) { %>
-            <li>
-              <a class="ubin" href="<%= m.href %>">
-                <span class="ubin-ikon"><%- ikon(m.ikon, 24) %></span>
-                <span class="ubin-label"><%= m.label %></span>
-              </a>
-            </li>
-          <% }) %>
-        </ul>
-      </div>
-    <% }) %>
-  </div>
-</section>
-<% } %>
+<script src="/js/absen.js" defer></script>
 <%- include('../partials/bawah') %>

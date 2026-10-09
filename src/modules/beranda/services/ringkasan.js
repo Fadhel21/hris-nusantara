@@ -7,6 +7,7 @@ const catat = require('../../absensi/services/catat');
 const saldo = require('../../cuti/services/saldo');
 const pengajuan = require('../../persetujuan/services/pengajuan');
 const slip = require('../../penggajian/services/slip');
+const akses = require('../../karyawan/services/akses');
 const waktu = require('../../absensi/services/waktu');
 
 const LABEL_PERAN = { admin: 'Administrator', hr: 'HR', atasan: 'Atasan', karyawan: 'Karyawan' };
@@ -55,20 +56,62 @@ function pintasan(menuPengguna) {
   return hasil;
 }
 
+async function profilSaya(karyawanId) {
+  const { rows } = await db.query(
+    `SELECT k.nama, k.nomor_induk, j.nama AS jabatan, d.nama AS departemen, c.nama AS cabang
+       FROM karyawan k
+       LEFT JOIN ${akses.PENEMPATAN_SAAT_INI} s ON s.karyawan_id = k.id
+       LEFT JOIN jabatan j ON j.id = s.jabatan_id
+       LEFT JOIN departemen d ON d.id = s.departemen_id
+       LEFT JOIN cabang c ON c.id = s.cabang_id
+      WHERE k.id = $1 AND k.deleted_at IS NULL`, [karyawanId]);
+  return rows[0] || null;
+}
+
+async function jadwalBerlaku(tanggal) {
+  const { rows } = await db.query(
+    `SELECT to_char(jam_masuk, 'HH24:MI') AS masuk, to_char(jam_pulang, 'HH24:MI') AS pulang
+       FROM jadwal_kerja WHERE deleted_at IS NULL AND tanggal_berlaku <= $1 ORDER BY tanggal_berlaku DESC, id DESC LIMIT 1`, [tanggal]);
+  return rows[0] || null;
+}
+
+// Kehadiran seluruh karyawan aktif hari ini (admin/HR). Tanggal dibandingkan dengan kolom tanggal lokal catatan absensi.
+async function kehadiranHariIni(tanggal) {
+  const { rows } = await db.query(
+    `SELECT
+       (SELECT count(*)::int FROM karyawan WHERE deleted_at IS NULL AND status = 'aktif') AS total,
+       (SELECT count(DISTINCT karyawan_id)::int FROM absensi_catat WHERE deleted_at IS NULL AND jenis = 'masuk' AND tanggal = $1) AS hadir,
+       (SELECT count(DISTINCT p.karyawan_id)::int FROM pengajuan p
+          JOIN pengajuan_cuti pc ON pc.pengajuan_id = p.id
+         WHERE p.deleted_at IS NULL AND p.status = 'disetujui' AND $1::date BETWEEN pc.tanggal_mulai AND pc.tanggal_akhir) AS cuti`, [tanggal]);
+  const r = rows[0];
+  return { total: r.total, hadir: r.hadir, cuti: r.cuti, belum: Math.max(0, r.total - r.hadir - r.cuti), persen: r.total ? Math.round((r.hadir * 100) / r.total) : 0 };
+}
+
+const LABEL_JENIS = { cuti: 'Cuti', izin: 'Izin', lembur: 'Lembur', koreksi: 'Koreksi absensi' };
+function tugasDari(inbox) {
+  return inbox.slice(0, 5).map((p) => ({
+    id: p.id, nama: p.nama_karyawan, inisial: String(p.nama_karyawan || '?').charAt(0).toUpperCase(),
+    jenis: p.jenis === 'cuti' && p.jenis_cuti ? `Cuti ${p.jenis_cuti}` : (LABEL_JENIS[p.jenis] || p.jenis), tanggal: p.tanggal_mulai,
+  }));
+}
+
 async function untuk(pengguna, { modeKaryawan = false } = {}) {
   const menuPengguna = menu.untukPengguna(pengguna, modeKaryawan);
   const kartu = [];
+  let inboxTerakhir = null;
   const punyaKaryawan = !!pengguna.karyawanId;
   const tahun = Number(waktu.lokal(new Date(), 'Asia/Jakarta').tanggal.slice(0, 4));
 
+  let absen = null;
   if (punyaKaryawan) {
-    const absen = await aman(() => catat.statusHariIni(pengguna));
+    absen = await aman(() => catat.statusHariIni(pengguna));
     if (absen) {
       let nilai = 'Belum absen'; let ket = 'Absen masuk dengan foto'; let nada = 'peringatan';
       if (absen.masuk && !absen.pulang) { nilai = `Masuk ${absen.masuk.jam}`; ket = 'Jangan lupa absen pulang'; nada = 'sukses'; }
       if (absen.masuk && absen.pulang) { nilai = `${absen.masuk.jam} – ${absen.pulang.jam}`; ket = 'Absen hari ini lengkap'; nada = 'sukses'; }
       if (!absen.adaPenempatan) { nilai = 'Belum bisa absen'; ket = 'Penempatan cabang belum diatur'; nada = 'bahaya'; }
-      kartu.push({ label: 'Absen hari ini', nilai, ket, href: '/absensi', ikon: 'absensi', nada });
+      kartu.push({ label: 'Absen hari ini', nilai, ket, href: '/absensi', ikon: 'absensi', nada, kunci: 'absen' });
     }
     const rincian = await aman(() => saldo.rincian(pengguna.karyawanId, tahun));
     if (rincian) {
@@ -94,10 +137,11 @@ async function untuk(pengguna, { modeKaryawan = false } = {}) {
 
   // Pengajuan yang menunggu keputusan pengguna ini (atasan, HR, admin, atau siapa pun yang ditetapkan sebagai pemutus).
   const inbox = await aman(() => pengajuan.inbox(pengguna));
+  inboxTerakhir = inbox;
   if (!modeKaryawan && inbox && (inbox.length || ['admin', 'hr', 'atasan'].includes(pengguna.peran))) {
     kartu.push({
       label: 'Menunggu keputusan Anda', nilai: String(inbox.length), ket: inbox.length ? 'Buka untuk menyetujui atau menolak' : 'Semua sudah diputuskan',
-      href: '/persetujuan', ikon: 'perisai', nada: inbox.length ? 'bahaya' : 'sukses',
+      href: '/persetujuan', ikon: 'perisai', nada: inbox.length ? 'bahaya' : 'sukses', kunci: 'inbox',
     });
   }
 
@@ -118,6 +162,15 @@ async function untuk(pengguna, { modeKaryawan = false } = {}) {
     }
   }
 
+  const hariIni = waktu.lokal(new Date(), 'Asia/Jakarta').tanggal;
+  const profil = punyaKaryawan ? await aman(() => profilSaya(pengguna.karyawanId)) : null;
+  const jadwal = punyaKaryawan ? await aman(() => jadwalBerlaku(hariIni)) : null;
+  const inboxAktif = !modeKaryawan && inboxTerakhir ? inboxTerakhir : null;
+  const tugas = inboxAktif ? tugasDari(inboxAktif) : [];
+  const jumlahTugas = inboxAktif ? inboxAktif.length : 0;
+  const kehadiran = !modeKaryawan && ['admin', 'hr'].includes(pengguna.peran) ? await aman(() => kehadiranHariIni(hariIni)) : null;
+  const absenRingkas = absen ? { masuk: absen.masuk ? absen.masuk.jam : null, pulang: absen.pulang ? absen.pulang.jam : null, zona: absen.zona, adaPenempatan: absen.adaPenempatan } : null;
+
   // Tombol utama di sorotan: Tap In / Tap Out / lihat absensi, hanya bila ada kartu absensi yang valid.
   let aksiUtama = null;
   const kartuAbsen = kartu.find((k) => k.href === '/absensi');
@@ -129,7 +182,7 @@ async function untuk(pengguna, { modeKaryawan = false } = {}) {
   }
 
   return {
-    aksiUtama,
+    aksiUtama, profil, jadwal, tugas, jumlahTugas, kehadiran, absenRingkas, punyaKaryawan,
     sapaan: sapaanWaktu(), nama: (await aman(() => namaKaryawan(pengguna))) || pengguna.username,
     peran: LABEL_PERAN[pengguna.peran] || pengguna.peran, kartu, pintasan: pintasan(menuPengguna), grupMenu: menuLengkap(menuPengguna),
     tanggal: waktu.lokal(new Date(), 'Asia/Jakarta').tanggal, modeKaryawan,
