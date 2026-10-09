@@ -53,6 +53,16 @@
       </div>
     </header>
     <main class="konten" id="konten" tabindex="-1">
+      <%
+        var penandaMenu = null;
+        menu.forEach(function (m) {
+          var cocok = halaman === m.href || (m.href !== '/' && halaman.indexOf(m.href + '/') === 0);
+          if (cocok && (!penandaMenu || m.href.length > penandaMenu.href.length)) penandaMenu = m;
+        });
+      %>
+      <% if (penandaMenu && penandaMenu.href !== '/') { %>
+        <p class="jejak"><span class="jejak-ikon"><%- ikon(penandaMenu.ikon || 'dokumen', 18) %></span><% if (penandaMenu.grup) { %><span><%= penandaMenu.grup %></span><span class="jejak-pisah" aria-hidden="true">/</span><% } %><strong><%= penandaMenu.label %></strong></p>
+      <% } %>
 <% } else { %>
 <main class="tamu">
 <% } %>

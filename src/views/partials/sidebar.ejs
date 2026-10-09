@@ -25,7 +25,7 @@
   <nav class="sidebar-nav">
     <% utama.forEach(function (m) { %>
       <a class="nav-tautan nav-utama <%= m.href === aktifHref ? 'aktif' : '' %>" href="<%= m.href %>" <%- m.href === aktifHref ? 'aria-current="page"' : '' %>>
-        <span class="nav-ikon"><%- ikon('beranda') %></span><span><%= m.label %></span>
+        <span class="nav-ikon"><%- ikon(m.ikon || 'beranda') %></span><span><%= m.label %></span>
       </a>
     <% }) %>
 
@@ -39,8 +39,8 @@
           <span class="nav-chevron" :class="{ 'putar': buka }"><%- ikon('chevron', 16) %></span>
         </button>
         <ul id="grup-<%= slug %>" class="nav-sub <%= aktifGrup ? '' : 'tertutup' %>" :class="{ 'tertutup': !buka }">
-          <% perGrup[g].forEach(function (m) { %>
-            <li><a class="nav-tautan nav-tautan-sub <%= m.href === aktifHref ? 'aktif' : '' %>" href="<%= m.href %>" <%- m.href === aktifHref ? 'aria-current="page"' : '' %>><%= m.label %></a></li>
+          <% perGrup[g].forEach(function (m, n) { %>
+            <li style="--n:<%= n %>"><a class="nav-tautan nav-tautan-sub <%= m.href === aktifHref ? 'aktif' : '' %>" href="<%= m.href %>" <%- m.href === aktifHref ? 'aria-current="page"' : '' %>><span class="nav-ikon nav-ikon-sub"><%- ikon(m.ikon || 'dokumen', 18) %></span><span><%= m.label %></span></a></li>
           <% }) %>
         </ul>
       </div>

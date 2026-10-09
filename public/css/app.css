@@ -78,7 +78,13 @@ code { font-family: var(--font-mono); font-size: .85em; background: var(--abu-10
 .nav-sub { list-style: none; margin: 2px 0 var(--ruang-2); padding: 0 0 0 calc(var(--ruang-3) + 11px); position: relative; }
 .nav-sub::before { content: ""; position: absolute; left: calc(var(--ruang-3) + 10px); top: 4px; bottom: 4px; width: 1px; background: var(--sidebar-garis); }
 .nav-sub.tertutup { display: none; }
-.nav-tautan-sub { min-height: 36px; padding: .3rem var(--ruang-3); margin-left: var(--ruang-3); font-size: var(--teks-s); }
+.nav-tautan-sub { min-height: 38px; gap: var(--ruang-2); padding: .3rem var(--ruang-3); margin-left: var(--ruang-3); font-size: var(--teks-s); }
+.nav-ikon-sub { width: 20px; height: 20px; opacity: .75; transition: opacity var(--durasi-cepat) var(--ease-masuk), transform var(--durasi-normal) var(--ease-masuk); }
+.nav-tautan-sub:hover .nav-ikon-sub, .nav-tautan-sub.aktif .nav-ikon-sub { opacity: 1; }
+.nav-tautan:hover .nav-ikon { transform: translateX(1px) scale(1.06); }
+.nav-ikon { transition: transform var(--durasi-normal) var(--ease-masuk); }
+.nav-tautan.aktif .nav-ikon { color: #fff; }
+.nav-sub:not(.tertutup) > li { animation: geser-masuk var(--durasi-normal) var(--ease-masuk) both; animation-delay: calc(var(--n, 0) * 35ms); }
 .nav-tautan-sub.aktif::before { left: calc(-1 * var(--ruang-3) - 12px); }
 
 /* Bilah atas */
@@ -131,7 +137,19 @@ code { font-family: var(--font-mono); font-size: .85em; background: var(--abu-10
 .blok { margin-bottom: var(--ruang-5); }
 .blok > h2:first-child { margin: 0 0 var(--ruang-2); font-size: var(--teks-l); }
 .blok h3, h3.sub { margin: var(--ruang-5) 0 var(--ruang-2); font-size: var(--teks-xs); font-weight: 700; color: var(--warna-teks-redup); text-transform: uppercase; letter-spacing: .06em; }
-.form-lebar { max-width: 36rem; }
+.form-lebar { max-width: 46rem; }
+.kartu > h2:first-child, .blok > h2:first-child {
+  display: flex; align-items: center; gap: var(--ruang-3); margin: 0 0 var(--ruang-4); padding-bottom: var(--ruang-3);
+  font-size: var(--teks-l); border-bottom: 1px solid var(--warna-garis);
+}
+.kartu > h2:first-child::before, .blok > h2:first-child::before { content: ""; flex: none; width: 4px; height: 1.2em; border-radius: 4px; background: linear-gradient(var(--biru-500), var(--biru-700)); }
+.kartu > h2:first-child > .nav-ikon { color: var(--warna-utama); }
+
+/* Jejak halaman: ikon + kelompok / nama menu di atas isi */
+.jejak { display: flex; align-items: center; gap: var(--ruang-2); margin: 0 0 var(--ruang-3); font-size: var(--teks-s); color: var(--warna-teks-redup); }
+.jejak strong { color: var(--warna-teks); font-weight: 700; }
+.jejak-ikon { display: grid; place-items: center; width: 30px; height: 30px; margin-right: var(--ruang-1); color: var(--warna-utama-di-lembut); background: var(--warna-utama-lembut); border-radius: var(--radius-s); }
+.jejak-pisah { opacity: .5; }
 .daftar-polos { list-style: none; margin: 0; padding: 0; }
 .daftar-polos li { padding: var(--ruang-1) 0; }
 .pohon { margin: var(--ruang-1) 0 0; padding-left: var(--ruang-5); border-left: 1px dashed var(--warna-garis); list-style: none; }
@@ -194,6 +212,19 @@ fieldset.hari-kerja .centang { display: inline-flex; margin: 0 var(--ruang-4) 0 
 .filter { display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--ruang-2); margin-bottom: var(--ruang-4); }
 .filter input:not([type=hidden]), .filter select { margin: 0; width: auto; }
 .filter input[type=text] { flex: 1; min-width: 12rem; }
+
+/* Formulir bertata dua kolom (otomatis satu kolom di layar sempit). Hanya untuk wadah yang langsung berisi label,
+   sehingga formulir sebaris (mis. tombol hapus di tabel) tidak terpengaruh. */
+:is(form, .form-lebar):not(.filter):has(> label) { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); column-gap: var(--ruang-4); align-items: start; }
+:is(form, .form-lebar):not(.filter):has(> label) > :not(label) { grid-column: 1 / -1; }
+:is(form, .form-lebar):not(.filter):has(> label) > label:has(textarea, .centang, fieldset) { grid-column: 1 / -1; }
+:is(form, .form-lebar):not(.filter):has(> label) > .baris-tombol { margin-top: var(--ruang-2); padding-top: var(--ruang-4); border-top: 1px solid var(--warna-garis); }
+:is(form, .form-lebar):not(.filter):has(> label) > label { animation: geser-masuk var(--durasi-normal) var(--ease-masuk) both; }
+:is(form, .form-lebar):has(> label) > label:nth-of-type(2) { animation-delay: 40ms; }
+:is(form, .form-lebar):has(> label) > label:nth-of-type(3) { animation-delay: 80ms; }
+:is(form, .form-lebar):has(> label) > label:nth-of-type(4) { animation-delay: 120ms; }
+:is(form, .form-lebar):has(> label) > label:nth-of-type(n+5) { animation-delay: 160ms; }
+label:focus-within { color: var(--warna-utama-di-lembut); }
 
 /* ---------- Tombol ---------- */
 .tombol {
@@ -279,7 +310,7 @@ details.tambah > summary:hover { background: var(--warna-utama-lembut); }
 details.tambah > :not(summary) { margin-left: var(--ruang-4); margin-right: var(--ruang-4); }
 details.tambah > summary + * { margin-top: var(--ruang-4); }
 details.tambah > :last-child { margin-bottom: var(--ruang-4); }
-details.tambah form { max-width: 36rem; }
+details.tambah form { max-width: 46rem; }
 details.tambah label:last-of-type { margin-bottom: var(--ruang-3); }
 
 /* ---------- Identitas karyawan, foto ---------- */
@@ -323,6 +354,7 @@ a.kartu-stat:hover { color: inherit; transform: translateY(-2px); border-color: 
 .pintasan .panah { margin-left: auto; color: var(--warna-teks-redup); }
 
 /* ---------- Animasi ---------- */
+@keyframes geser-masuk { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
 @keyframes masuk-halaman { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ---------- Responsif ---------- */
@@ -358,7 +390,7 @@ a.kartu-stat:hover { color: inherit; transform: translateY(-2px); border-color: 
 /* ---------- Pengguna yang mengurangi gerak ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .konten { animation: none; }
+  .konten, .nav-sub > li, form > label { animation: none !important; }
   .sidebar { transition: none; }
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }

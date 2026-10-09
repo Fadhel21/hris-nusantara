@@ -33,16 +33,11 @@ const URUTAN_PINTASAN = [
   '/absensi', '/pengajuan', '/persetujuan', '/slip-saya', '/karyawan', '/absensi/tim',
   '/penggajian', '/cuti/jatah', '/organisasi/struktur', '/absensi/libur',
 ];
-const IKON_PINTASAN = {
-  '/absensi': 'absensi', '/pengajuan': 'pengajuan', '/persetujuan': 'perisai', '/slip-saya': 'penggajian', '/karyawan': 'karyawan',
-  '/absensi/tim': 'grafik', '/penggajian': 'penggajian', '/cuti/jatah': 'kalender', '/organisasi/struktur': 'organisasi', '/absensi/libur': 'kalender',
-};
-
 function pintasan(menuPengguna) {
   const hasil = [];
   for (const href of URUTAN_PINTASAN) {
     const m = menuPengguna.find((x) => x.href === href);
-    if (m) hasil.push({ label: m.label, href: m.href, ikon: IKON_PINTASAN[href] || 'dokumen' });
+    if (m) hasil.push({ label: m.label, href: m.href, ikon: m.ikon || 'dokumen' });
     if (hasil.length >= 8) break;
   }
   return hasil;

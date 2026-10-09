@@ -8,7 +8,7 @@
 <form method="post" action="/karyawan<%= id ? '/' + id : '' %>">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <section class="kartu form-lebar blok">
-    <h2>Data pribadi</h2>
+    <h2><span class="nav-ikon"><%- ikon('profil', 20) %></span>Data pribadi</h2>
     <label>Nama *<input type="text" name="nama" value="<%= v('nama') %>" required></label>
     <label>NIK (16 digit)<input type="text" name="nik" value="<%= v('nik') %>" inputmode="numeric" autocomplete="off"></label>
     <label>NPWP (15-16 digit)<input type="text" name="npwp" value="<%= v('npwp') %>" inputmode="numeric" autocomplete="off"></label>
@@ -30,7 +30,7 @@
 
   <% if (!id) { %>
   <section class="kartu form-lebar blok">
-    <h2>Penempatan awal</h2>
+    <h2><span class="nav-ikon"><%- ikon('cabang', 20) %></span>Penempatan awal</h2>
     <label>Cabang *<select name="cabang_id" required><option value="">— pilih —</option><%- pilih(opsi.cabang, 'cabang_id') %></select></label>
     <label>Departemen *<select name="departemen_id" required><option value="">— pilih —</option><%- pilih(opsi.departemen, 'departemen_id') %></select></label>
     <label>Jabatan *<select name="jabatan_id" required><option value="">— pilih —</option><%- pilih(opsi.jabatan, 'jabatan_id') %></select></label>
@@ -38,7 +38,7 @@
     <label>Atasan langsung<select name="atasan_id"><option value="">— tidak ada —</option><%- pilih(opsi.atasan, 'atasan_id') %></select></label>
   </section>
   <section class="kartu form-lebar blok">
-    <h2>Gaji dan kontrak awal</h2>
+    <h2><span class="nav-ikon"><%- ikon('penggajian', 20) %></span>Gaji dan kontrak awal</h2>
     <label>Gaji pokok (Rp) *<input type="text" name="gaji_pokok" value="<%= v('gaji_pokok') %>" inputmode="decimal" placeholder="5000000 atau 5000000.50" required></label>
     <label>Jenis kontrak *
       <select name="jenis" required>
