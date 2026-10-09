@@ -137,10 +137,10 @@
 }
 .pusat {
   position: absolute; left: 50%; top: 50%; width: var(--u); height: var(--u); display: grid; place-items: center;
-  transform: translate(-50%, -50%); border-radius: 28%;
-  background: linear-gradient(145deg, #4b95ff, #2158c9);
+  transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #7cb0ff, #2b6be0 55%, #1b46a8);
   border: 1px solid rgba(255, 255, 255, .4);
-  box-shadow: 0 24px 48px rgba(3, 10, 30, .45), inset 0 0 32px rgba(255, 255, 255, .18);
+  box-shadow: 0 0 0 14px rgba(255, 255, 255, .06), 0 0 0 28px rgba(255, 255, 255, .04), 0 24px 48px rgba(3, 10, 30, .45), inset 0 0 32px rgba(255, 255, 255, .18);
   animation: melayang 7s ease-in-out infinite;
 }
 .pusat svg { width: 52%; height: 52%; fill: none; stroke: #fff; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
