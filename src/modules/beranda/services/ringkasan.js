@@ -2,6 +2,7 @@
 // tidak boleh membuat seluruh beranda gagal. Hanya data yang berhak dilihat peran itu yang diambil.
 const db = require('../../../config/db');
 const menu = require('../../../config/menu');
+const { IKON_GRUP } = require('../../../config/ikon');
 const catat = require('../../absensi/services/catat');
 const saldo = require('../../cuti/services/saldo');
 const pengajuan = require('../../persetujuan/services/pengajuan');
@@ -33,6 +34,17 @@ const URUTAN_PINTASAN = [
   '/absensi', '/pengajuan', '/persetujuan', '/slip-saya', '/karyawan', '/absensi/tim',
   '/penggajian', '/cuti/jatah', '/organisasi/struktur', '/absensi/libur',
 ];
+// Semua menu yang boleh diakses peran ini, dikelompokkan seperti sidebar (untuk kisi ikon di beranda).
+function menuLengkap(menuPengguna) {
+  const peta = new Map();
+  for (const m of menuPengguna) {
+    if (!m.grup) continue;
+    if (!peta.has(m.grup)) peta.set(m.grup, { nama: m.grup, slug: m.grup.toLowerCase(), ikon: IKON_GRUP[m.grup] || 'dokumen', item: [] });
+    peta.get(m.grup).item.push({ label: m.label, href: m.href, ikon: m.ikon || 'dokumen' });
+  }
+  return [...peta.values()];
+}
+
 function pintasan(menuPengguna) {
   const hasil = [];
   for (const href of URUTAN_PINTASAN) {
@@ -108,7 +120,7 @@ async function untuk(pengguna) {
 
   return {
     sapaan: sapaanWaktu(), nama: (await aman(() => namaKaryawan(pengguna))) || pengguna.username,
-    peran: LABEL_PERAN[pengguna.peran] || pengguna.peran, kartu, pintasan: pintasan(menuPengguna),
+    peran: LABEL_PERAN[pengguna.peran] || pengguna.peran, kartu, pintasan: pintasan(menuPengguna), grupMenu: menuLengkap(menuPengguna),
     tanggal: waktu.lokal(new Date(), 'Asia/Jakarta').tanggal,
   };
 }

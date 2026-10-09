@@ -17,7 +17,7 @@ module.exports = [
   { grup: 'Penggajian', label: 'Komponen gaji', ikon: 'komponen', href: '/organisasi/komponen_gaji', peran: HR },
   { grup: 'Penggajian', label: 'Pengaturan penggajian', ikon: 'pengaturan', href: '/penggajian/pengaturan', peran: HR },
   { grup: 'Penggajian', label: 'Pajak (PPh 21)', ikon: 'pajak', href: '/penggajian/pajak', peran: HR },
-  { grup: 'Absensi', label: 'Absen saya', ikon: 'lokasi', href: '/absensi', peran: SEMUA },
+  { grup: 'Absensi', label: 'Absen saya', ikon: 'tapin', href: '/absensi', peran: SEMUA },
   { grup: 'Absensi', label: 'Rekap tim', ikon: 'grafik', href: '/absensi/tim', peran: ['admin', 'hr', 'atasan'] },
   { grup: 'Absensi', label: 'Hari libur', ikon: 'libur', href: '/absensi/libur', peran: HR },
   { grup: 'Absensi', label: 'Pengaturan absensi', ikon: 'pengaturan', href: '/absensi/pengaturan', peran: HR },

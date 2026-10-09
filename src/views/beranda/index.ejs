@@ -17,14 +17,21 @@
 </section>
 <% } %>
 
-<% if (pintasan.length) { %>
-<section>
-  <h2 class="judul-bagian">Pintasan</h2>
-  <ul class="pintasan">
-    <% pintasan.forEach(function (p) { %>
-      <li><a href="<%= p.href %>"><span class="nav-ikon"><%- ikon(p.ikon, 22) %></span><span><%= p.label %></span><span class="panah"><%- ikon('panah', 18) %></span></a></li>
-    <% }) %>
-  </ul>
+<% if (grupMenu.length) { %>
+<section class="semua-menu" aria-labelledby="judul-semua-menu">
+  <h2 id="judul-semua-menu" class="judul-bagian">Semua menu</h2>
+  <div class="grup-ubin">
+    <ul class="ubin-daftar">
+      <% grupMenu.forEach(function (g) { g.item.forEach(function (m) { %>
+        <li class="grup-<%= g.slug %>">
+          <a class="ubin" href="<%= m.href %>" title="<%= g.nama %>">
+            <span class="ubin-ikon"><%- ikon(m.ikon, 28) %></span>
+            <span class="ubin-label"><%= m.label %></span>
+          </a>
+        </li>
+      <% }) }) %>
+    </ul>
+  </div>
 </section>
 <% } %>
 <%- include('../partials/bawah') %>
