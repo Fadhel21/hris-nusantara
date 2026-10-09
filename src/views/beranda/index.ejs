@@ -1,7 +1,7 @@
 <%- include('../partials/atas', { judul: 'Beranda' }) %>
 <section class="sapaan">
   <h1><%= sapaan %>, <%= nama %></h1>
-  <p><%= peran %> · <%= fmt.hari(tanggal) %>, <%= fmt.tanggal(tanggal) %></p>
+  <p><%= peran %><%= modeKaryawan ? " · Mode Karyawan" : "" %> · <%= fmt.hari(tanggal) %>, <%= fmt.tanggal(tanggal) %></p>
 </section>
 
 <% if (kartu.length) { %>

@@ -414,6 +414,17 @@ a.kartu-stat:hover { color: inherit; transform: translateY(-2px); border-color: 
 .tap-syarat li { display: flex; gap: var(--ruang-2); align-items: flex-start; }
 .tap-syarat svg { flex: none; margin-top: 2px; color: var(--warna-utama); }
 
+/* ---------- Pengalih mode (Kerja / Karyawan) ---------- */
+.pengalih-mode { display: inline-flex; margin: 0; padding: 3px; background: var(--abu-100); border-radius: var(--radius-bulat); }
+.pengalih-mode button {
+  display: inline-flex; align-items: center; gap: var(--ruang-2); min-height: 38px; padding: 0 var(--ruang-3);
+  font: inherit; font-size: var(--teks-s); font-weight: 600; color: var(--warna-teks-redup); background: transparent; border: 0; border-radius: var(--radius-bulat); cursor: pointer;
+  transition: background-color var(--durasi-cepat) var(--ease-masuk), color var(--durasi-cepat) var(--ease-masuk), box-shadow var(--durasi-cepat) var(--ease-masuk);
+}
+.pengalih-mode button:hover { color: var(--warna-teks); }
+.pengalih-mode button.aktif { color: var(--warna-utama-di-lembut); background: var(--warna-permukaan); box-shadow: var(--bayangan-1); }
+@media (max-width: 640px) { .pengalih-mode button span { display: none; } .pengalih-mode button { padding: 0 var(--ruang-3); min-width: 44px; justify-content: center; } }
+
 /* ---------- Animasi ---------- */
 @keyframes geser-masuk { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
 @keyframes masuk-halaman { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

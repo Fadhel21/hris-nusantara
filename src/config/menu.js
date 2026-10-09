@@ -30,6 +30,15 @@ const DAFTAR = [
   { grup: 'Organisasi', label: 'Golongan', ikon: 'golongan', href: '/organisasi/golongan', peran: HR },
 ];
 
-DAFTAR.untukPengguna = (pengguna) => DAFTAR.filter((m) => m.peran.includes(pengguna.peran) && (!m.perluKaryawan || pengguna.karyawanId));
+// Mode karyawan: tampilan layanan mandiri (hanya menu pribadi). Hanya mengubah tampilan; hak akses tetap diperiksa di route/service.
+DAFTAR.untukPengguna = (pengguna, modeKaryawan = false) => DAFTAR.filter((m) => {
+  if (!m.peran.includes(pengguna.peran)) return false;
+  if (m.perluKaryawan && !pengguna.karyawanId) return false;
+  if (modeKaryawan && m.href !== '/' && !m.perluKaryawan) return false;
+  return true;
+});
+
+// Siapa yang boleh berganti mode: peran selain karyawan yang punya data karyawan.
+DAFTAR.bisaGantiMode = (pengguna) => !!pengguna && pengguna.peran !== 'karyawan' && !!pengguna.karyawanId;
 
 module.exports = DAFTAR;

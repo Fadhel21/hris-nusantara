@@ -17,7 +17,7 @@
   <div class="sidebar-kepala">
     <a class="sidebar-merek" href="/" aria-label="HRIS, ke beranda">
       <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="9" fill="#1f6feb"/><path d="M10 9v14M22 9v14M10 16h12" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
-      <span class="sidebar-merek-teks"><strong>HRIS</strong><small>Manajemen SDM</small></span>
+      <span class="sidebar-merek-teks"><strong>HRIS</strong><small><%= (typeof modeKaryawan !== 'undefined' && modeKaryawan && bisaGantiMode) ? 'Mode Karyawan' : 'Manajemen SDM' %></small></span>
     </a>
     <button class="sidebar-tutup" type="button" @click="menuBuka = false" aria-label="Tutup menu navigasi"><%- ikon('tutup', 20) %></button>
   </div>

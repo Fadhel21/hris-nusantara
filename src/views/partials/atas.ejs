@@ -31,6 +31,14 @@
       <p class="bilah-judul"><%= typeof judul !== 'undefined' ? judul : 'HRIS' %></p>
       <span class="spasi"></span>
 
+      <% if (bisaGantiMode) { %>
+      <form class="pengalih-mode" method="post" action="/mode" role="group" aria-label="Mode tampilan">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" name="mode" value="kerja" class="<%= modeKaryawan ? '' : 'aktif' %>" <%- modeKaryawan ? '' : 'aria-pressed="true"' %>><%- ikon('organisasi', 16) %><span><%= labelPeran[pengguna.peran] || 'Kerja' %></span></button>
+        <button type="submit" name="mode" value="karyawan" class="<%= modeKaryawan ? 'aktif' : '' %>" <%- modeKaryawan ? 'aria-pressed="true"' : '' %>><%- ikon('profil', 16) %><span>Karyawan</span></button>
+      </form>
+      <% } %>
+
       <div class="menu-pengguna" x-data="{ buka: false }" @click.outside="buka = false" @keydown.escape="buka = false">
         <button type="button" class="pengguna-tombol" @click="buka = !buka" :aria-expanded="buka.toString()" aria-haspopup="menu" aria-label="Menu akun <%= pengguna.username %>">
           <span class="avatar" aria-hidden="true"><%= pengguna.username.charAt(0).toUpperCase() %></span>

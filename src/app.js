@@ -40,7 +40,13 @@ function buatApp() {
   app.use(csrf);
   app.use(muatPengguna);
   app.use((req, res, next) => {
-    res.locals.menu = req.pengguna ? menu.untukPengguna(req.pengguna) : [];
+    // Mode karyawan (cookie biasa, hanya preferensi tampilan): dipakai bila akun boleh berganti mode.
+    const bisaGantiMode = menu.bisaGantiMode(req.pengguna);
+    const modeKaryawan = !!req.pengguna && (req.pengguna.peran === 'karyawan' || (bisaGantiMode && req.cookies.mode === 'karyawan'));
+    req.modeKaryawan = modeKaryawan;
+    res.locals.bisaGantiMode = bisaGantiMode;
+    res.locals.modeKaryawan = modeKaryawan;
+    res.locals.menu = req.pengguna ? menu.untukPengguna(req.pengguna, modeKaryawan && bisaGantiMode) : [];
     res.locals.halaman = req.path;
     res.locals.fmt = {
       rupiah: format.rupiah,

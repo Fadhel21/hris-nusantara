@@ -55,8 +55,8 @@ function pintasan(menuPengguna) {
   return hasil;
 }
 
-async function untuk(pengguna) {
-  const menuPengguna = menu.untukPengguna(pengguna);
+async function untuk(pengguna, { modeKaryawan = false } = {}) {
+  const menuPengguna = menu.untukPengguna(pengguna, modeKaryawan);
   const kartu = [];
   const punyaKaryawan = !!pengguna.karyawanId;
   const tahun = Number(waktu.lokal(new Date(), 'Asia/Jakarta').tanggal.slice(0, 4));
@@ -94,14 +94,14 @@ async function untuk(pengguna) {
 
   // Pengajuan yang menunggu keputusan pengguna ini (atasan, HR, admin, atau siapa pun yang ditetapkan sebagai pemutus).
   const inbox = await aman(() => pengajuan.inbox(pengguna));
-  if (inbox && (inbox.length || ['admin', 'hr', 'atasan'].includes(pengguna.peran))) {
+  if (!modeKaryawan && inbox && (inbox.length || ['admin', 'hr', 'atasan'].includes(pengguna.peran))) {
     kartu.push({
       label: 'Menunggu keputusan Anda', nilai: String(inbox.length), ket: inbox.length ? 'Buka untuk menyetujui atau menolak' : 'Semua sudah diputuskan',
       href: '/persetujuan', ikon: 'perisai', nada: inbox.length ? 'bahaya' : 'sukses',
     });
   }
 
-  if (['admin', 'hr'].includes(pengguna.peran)) {
+  if (!modeKaryawan && ['admin', 'hr'].includes(pengguna.peran)) {
     const aktif = await aman(async () => (await db.query("SELECT count(*)::int AS n FROM karyawan WHERE deleted_at IS NULL AND status = 'aktif'")).rows[0].n);
     if (aktif !== null) kartu.push({ label: 'Karyawan aktif', nilai: String(aktif), ket: 'Terdaftar di sistem', href: '/karyawan', ikon: 'karyawan', nada: '' });
     const periode = await aman(async () => (await db.query(
@@ -121,7 +121,7 @@ async function untuk(pengguna) {
   return {
     sapaan: sapaanWaktu(), nama: (await aman(() => namaKaryawan(pengguna))) || pengguna.username,
     peran: LABEL_PERAN[pengguna.peran] || pengguna.peran, kartu, pintasan: pintasan(menuPengguna), grupMenu: menuLengkap(menuPengguna),
-    tanggal: waktu.lokal(new Date(), 'Asia/Jakarta').tanggal,
+    tanggal: waktu.lokal(new Date(), 'Asia/Jakarta').tanggal, modeKaryawan,
   };
 }
 
