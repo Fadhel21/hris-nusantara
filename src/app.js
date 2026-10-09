@@ -40,7 +40,7 @@ function buatApp() {
   app.use(csrf);
   app.use(muatPengguna);
   app.use((req, res, next) => {
-    res.locals.menu = req.pengguna ? menu.filter((m) => m.peran.includes(req.pengguna.peran)) : [];
+    res.locals.menu = req.pengguna ? menu.untukPengguna(req.pengguna) : [];
     res.locals.halaman = req.path;
     res.locals.fmt = {
       rupiah: format.rupiah,

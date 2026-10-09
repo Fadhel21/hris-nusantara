@@ -1,7 +1,10 @@
 <%- include('../partials/atas', { judul: 'Absen saya' }) %>
 <div class="judul-halaman"><h1>Absen saya</h1></div>
 <% if (!terhubung) { %>
-  <div class="kartu"><p>Akun Anda belum terhubung ke data karyawan, sehingga tidak dapat absen. Hubungi administrator.</p></div>
+  <div class="kartu">
+    <p><strong>Akun ini belum tertaut ke data karyawan</strong>, jadi tidak bisa Tap In/Tap Out. Absensi hanya untuk akun yang dimiliki seorang karyawan (akun administrator murni tidak punya data karyawan).</p>
+    <p class="redup">Solusi: minta HR membuat akun untuk data karyawan Anda (Karyawan → pilih karyawan → tab Akun), lalu masuk dengan akun itu. Untuk mencoba, masuk dengan akun demo karyawan.</p>
+  </div>
 <% } else { %>
   <section class="kartu blok tap">
     <div class="tap-kepala">

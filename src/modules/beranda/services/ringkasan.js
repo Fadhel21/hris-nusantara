@@ -56,7 +56,7 @@ function pintasan(menuPengguna) {
 }
 
 async function untuk(pengguna) {
-  const menuPengguna = menu.filter((m) => m.peran.includes(pengguna.peran));
+  const menuPengguna = menu.untukPengguna(pengguna);
   const kartu = [];
   const punyaKaryawan = !!pengguna.karyawanId;
   const tahun = Number(waktu.lokal(new Date(), 'Asia/Jakarta').tanggal.slice(0, 4));
