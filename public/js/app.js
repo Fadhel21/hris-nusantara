@@ -5,6 +5,10 @@ document.addEventListener('alpine:init', function () {
     function baca() { try { return localStorage.getItem(kunci) === '1'; } catch (e) { return false; } }
     return {
       buka: aktifAwal || baca(),
+      // Kelompok yang sedang dikunjungi ikut diingat terbuka, sehingga tetap terbuka saat pindah ke kelompok lain.
+      init: function () {
+        if (aktifAwal) { try { localStorage.setItem(kunci, '1'); } catch (e) { /* penyimpanan dinonaktifkan */ } }
+      },
       alih: function () {
         this.buka = !this.buka;
         try { localStorage.setItem(kunci, this.buka ? '1' : '0'); } catch (e) { /* penyimpanan dinonaktifkan */ }
