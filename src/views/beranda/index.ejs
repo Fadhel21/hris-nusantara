@@ -1,7 +1,13 @@
 <%- include('../partials/atas', { judul: 'Beranda' }) %>
-<section class="sapaan">
-  <h1><%= sapaan %>, <%= nama %></h1>
-  <p><%= peran %><%= modeKaryawan ? " · Mode Karyawan" : "" %> · <%= fmt.hari(tanggal) %>, <%= fmt.tanggal(tanggal) %></p>
+<section class="sorotan">
+  <div>
+    <h1><%= sapaan %>, <%= nama %></h1>
+    <ul class="sorotan-info">
+      <li><%- ikon('profil', 16) %><%= peran %><%= modeKaryawan ? ' · Mode Karyawan' : '' %></li>
+      <li><%- ikon('kalender', 16) %><%= fmt.hari(tanggal) %>, <%= fmt.tanggal(tanggal) %></li>
+    </ul>
+  </div>
+  <% if (aksiUtama) { %><a class="tombol" href="<%= aksiUtama.href %>"><%- ikon(aksiUtama.ikon, 20) %> <%= aksiUtama.label %></a><% } %>
 </section>
 
 <% if (kartu.length) { %>
@@ -20,17 +26,22 @@
 <% if (grupMenu.length) { %>
 <section class="semua-menu" aria-labelledby="judul-semua-menu">
   <h2 id="judul-semua-menu" class="judul-bagian">Semua menu</h2>
-  <div class="grup-ubin">
-    <ul class="ubin-daftar">
-      <% grupMenu.forEach(function (g) { g.item.forEach(function (m) { %>
-        <li class="grup-<%= g.slug %>">
-          <a class="ubin" href="<%= m.href %>" title="<%= g.nama %>">
-            <span class="ubin-ikon"><%- ikon(m.ikon, 28) %></span>
-            <span class="ubin-label"><%= m.label %></span>
-          </a>
-        </li>
-      <% }) }) %>
-    </ul>
+  <div class="menu-kisi">
+    <% grupMenu.forEach(function (g) { %>
+      <div class="grup-ubin grup-<%= g.slug %>">
+        <h3 class="grup-ubin-judul"><span class="nav-ikon"><%- ikon(g.ikon, 18) %></span><%= g.nama %><span class="jumlah"><%= g.item.length %></span></h3>
+        <ul class="ubin-daftar">
+          <% g.item.forEach(function (m) { %>
+            <li>
+              <a class="ubin" href="<%= m.href %>">
+                <span class="ubin-ikon"><%- ikon(m.ikon, 24) %></span>
+                <span class="ubin-label"><%= m.label %></span>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+    <% }) %>
   </div>
 </section>
 <% } %>

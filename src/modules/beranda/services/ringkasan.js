@@ -118,7 +118,18 @@ async function untuk(pengguna, { modeKaryawan = false } = {}) {
     }
   }
 
+  // Tombol utama di sorotan: Tap In / Tap Out / lihat absensi, hanya bila ada kartu absensi yang valid.
+  let aksiUtama = null;
+  const kartuAbsen = kartu.find((k) => k.href === '/absensi');
+  if (kartuAbsen && kartuAbsen.nada !== 'bahaya') {
+    let label = 'Lihat absensi';
+    if (kartuAbsen.nilai === 'Belum absen') label = 'Tap In sekarang';
+    else if (kartuAbsen.ket.startsWith('Jangan')) label = 'Tap Out';
+    aksiUtama = { label, href: '/absensi', ikon: label === 'Tap Out' ? 'tapout' : 'tapin' };
+  }
+
   return {
+    aksiUtama,
     sapaan: sapaanWaktu(), nama: (await aman(() => namaKaryawan(pengguna))) || pengguna.username,
     peran: LABEL_PERAN[pengguna.peran] || pengguna.peran, kartu, pintasan: pintasan(menuPengguna), grupMenu: menuLengkap(menuPengguna),
     tanggal: waktu.lokal(new Date(), 'Asia/Jakarta').tanggal, modeKaryawan,
