@@ -4,6 +4,7 @@
   <div class="kartu">
     <p><strong>Akun ini belum tertaut ke data karyawan</strong>, jadi tidak bisa Tap In/Tap Out. Absensi hanya untuk akun yang dimiliki seorang karyawan (akun administrator murni tidak punya data karyawan).</p>
     <p class="redup">Solusi: minta HR membuat akun untuk data karyawan Anda (Karyawan → pilih karyawan → tab Akun), lalu masuk dengan akun itu. Untuk mencoba, masuk dengan akun demo karyawan.</p>
+    <% if (pengguna.peran === 'admin') { %><a class="tombol" href="/akun/tautan">Tautkan akun saya ke data karyawan</a><% } %>
   </div>
 <% } else { %>
   <section class="kartu blok tap">

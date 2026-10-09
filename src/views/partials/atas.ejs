@@ -35,7 +35,11 @@
       <form class="pengalih-mode" method="post" action="/mode" role="group" aria-label="Mode tampilan">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" name="mode" value="kerja" class="<%= modeKaryawan ? '' : 'aktif' %>" <%- modeKaryawan ? '' : 'aria-pressed="true"' %>><%- ikon('organisasi', 16) %><span><%= labelPeran[pengguna.peran] || 'Kerja' %></span></button>
-        <button type="submit" name="mode" value="karyawan" class="<%= modeKaryawan ? 'aktif' : '' %>" <%- modeKaryawan ? 'aria-pressed="true"' : '' %> <%- bisaGantiMode ? '' : 'disabled title="Akun ini belum tertaut ke data karyawan, jadi Mode Karyawan belum tersedia."' %>><%- ikon('profil', 16) %><span>Karyawan</span></button>
+        <% if (bisaGantiMode) { %>
+        <button type="submit" name="mode" value="karyawan" class="<%= modeKaryawan ? 'aktif' : '' %>" <%- modeKaryawan ? 'aria-pressed="true"' : '' %>><%- ikon('profil', 16) %><span>Karyawan</span></button>
+        <% } else { %>
+        <a class="mode-tautkan" href="/akun/tautan" title="Akun ini belum tertaut ke data karyawan. Klik untuk menautkan."><%- ikon('profil', 16) %><span>Karyawan</span></a>
+        <% } %>
       </form>
       <% } %>
 

@@ -1,0 +1,33 @@
+<%- include('../partials/atas', { judul: 'Tautkan akun ke karyawan' }) %>
+<div class="judul-halaman"><h1>Tautkan akun ke data karyawan</h1></div>
+<section class="kartu form-lebar">
+  <% if (galat) { %><p class="galat" role="alert"><%= galat %></p><% } %>
+  <% if (sudah) { %>
+    <p class="info">Akun Anda sudah tertaut ke data karyawan. Mode Karyawan tersedia di bilah atas.</p>
+    <a class="tombol" href="/">Kembali ke beranda</a>
+  <% } else if (pengguna.peran !== 'admin') { %>
+    <p>Hanya administrator yang dapat menautkan akunnya sendiri. Hubungi administrator.</p>
+  <% } else { %>
+    <p>Akun administrator tidak punya data karyawan, sehingga <strong>Mode Karyawan</strong>, Tap In/Tap Out, pengajuan, dan slip gaji belum bisa dipakai. Tautkan akun ini ke <strong>satu data karyawan milik Anda</strong>.</p>
+    <p class="redup">Setelah ditautkan, Anda melihat absensi, pengajuan, dan slip gaji karyawan tersebut sebagai milik Anda. Hanya karyawan aktif yang belum punya akun login yang bisa dipilih. Penautan dicatat di jejak audit.</p>
+    <% if (!kandidat.length) { %>
+      <p class="info-catatan">Belum ada karyawan aktif tanpa akun. Tambahkan data karyawan Anda dulu di menu Karyawan, lalu kembali ke halaman ini.</p>
+      <a class="tombol tombol-sekunder" href="/karyawan/baru">Tambah karyawan</a>
+    <% } else { %>
+      <form method="post" action="/akun/tautan">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Data karyawan saya *
+          <select name="karyawan_id" required>
+            <option value="">— pilih —</option>
+            <% kandidat.forEach(function (k) { %><option value="<%= k.id %>"><%= k.nama %><%= k.nomor_induk ? ' (' + k.nomor_induk + ')' : '' %></option><% }) %>
+          </select>
+        </label>
+        <div class="baris-tombol">
+          <button class="tombol" type="submit">Tautkan akun</button>
+          <a class="tombol tombol-sekunder" href="/">Batal</a>
+        </div>
+      </form>
+    <% } %>
+  <% } %>
+</section>
+<%- include('../partials/bawah') %>
