@@ -1,6 +1,6 @@
 # HRIS — panduan proyek
 
-Semua komunikasi, komentar, pesan error, UI, dan commit memakai **Bahasa Indonesia**. Proyek ini hanya lokal: jangan tambah git remote, jangan push.
+Semua komunikasi, komentar, pesan error, UI, dan commit memakai **Bahasa Indonesia**. Remote git hanya `origin` = https://github.com/Fadhel21/hris-nusantara.git (disetujui pemilik); jangan tambah remote lain dan jangan push ke tempat lain. Push hanya bila pemilik meminta.
 
 ## Stack (terkunci)
 Node.js 20+, Express 4, EJS (render server), HTMX + Alpine.js (file statis di `public/js`, tanpa build), PostgreSQL 16+ lewat `pg` + SQL murni (tanpa ORM), migrasi SQL bernomor + `scripts/migrate.js`, JWT di signed cookie + `bcryptjs`, `node-cron` di `worker/`, `pdfmake` untuk PDF (tanpa Puppeteer), Chart.js atau SVG/CSS.
